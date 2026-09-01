@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{
   --ink:#12231C;
@@ -39,45 +40,30 @@ button{cursor:pointer;border:none;background:none}
 .num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
 .wrap{max-width:760px;margin:0 auto;padding:0 var(--pad)}
 
-/* ---- header ---- */
-header{
-  background:var(--ink); color:#EAF0EC;
-  padding:calc(18px + env(safe-area-inset-top)) 0 18px;
-}
+header{background:var(--ink);color:#EAF0EC;padding:calc(18px + env(safe-area-inset-top)) 0 18px}
 header .wrap{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 header h1{font-size:19px;color:#fff;line-height:1.2}
 header p{margin:3px 0 0;font-size:12.5px;color:#93A79C}
-#sync{
-  font-size:11.5px;color:#93A79C;border:1px solid #2C4238;border-radius:99px;
-  padding:5px 11px;white-space:nowrap;flex:none
-}
+#sync{font-size:11.5px;color:#93A79C;border:1px solid #2C4238;border-radius:99px;padding:5px 11px;white-space:nowrap;flex:none}
 #sync.busy{color:#EAD9A8;border-color:#4A4326}
 #sync.bad{color:#F0B4B4;border-color:#5A2C2C}
 
-/* ---- tabs ---- */
 nav{
   position:fixed;bottom:0;left:0;right:0;z-index:40;
   background:rgba(255,255,255,.94);backdrop-filter:blur(12px);
   border-top:1px solid var(--line);
   padding:6px 0 calc(6px + env(safe-area-inset-bottom));
-  display:flex
+  display:flex;align-items:center
 }
-nav button{
-  flex:1;padding:9px 4px;font-size:11.5px;font-weight:500;color:var(--mute);
-  display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:10px
-}
+nav button{flex:1;padding:9px 4px;font-size:11.5px;font-weight:500;color:var(--mute);display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:10px}
 nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 nav button[aria-current="true"]{color:var(--green)}
-nav .fab{flex:none;padding:0 14px}
-nav .fab span{
-  width:50px;height:50px;border-radius:16px;background:var(--green);color:#fff;
-  display:grid;place-items:center;font-size:26px;line-height:1;box-shadow:0 6px 16px -6px rgba(31,111,78,.7)
-}
+nav .fab{flex:none;padding:0 10px}
+nav .fab span{width:50px;height:50px;border-radius:16px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:26px;line-height:1;box-shadow:0 6px 16px -6px rgba(31,111,78,.7)}
 
 section[hidden]{display:none}
 .pane{padding-top:18px}
 
-/* ---- cards ---- */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
 .stat{padding:18px 18px 16px;margin-bottom:12px}
 .stat .lbl{font-size:12.5px;color:var(--mute);margin-bottom:6px}
@@ -95,7 +81,6 @@ section[hidden]{display:none}
 
 h2.sec{font-size:14px;margin:22px 0 10px;color:var(--ink-soft);font-family:"IBM Plex Sans",sans-serif;font-weight:600}
 
-/* ---- breakdown bars ---- */
 .bar{padding:14px 16px;border-bottom:1px solid var(--line)}
 .bar:last-child{border-bottom:none}
 .bar .top{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;margin-bottom:7px}
@@ -104,27 +89,20 @@ h2.sec{font-size:14px;margin:22px 0 10px;color:var(--ink-soft);font-family:"IBM 
 .bar .fill{height:100%;background:var(--green);border-radius:99px}
 .bar small{color:var(--mute);font-size:11.5px}
 
-/* ---- filters ---- */
 .filters{padding:14px 16px;margin-bottom:12px}
 .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-.chip{
-  flex:none;padding:7px 13px;border-radius:99px;border:1px solid var(--line);
-  background:#fff;font-size:13px;color:var(--ink-soft);white-space:nowrap
-}
+.chip{flex:none;padding:7px 13px;border-radius:99px;border:1px solid var(--line);background:#fff;font-size:13px;color:var(--ink-soft);white-space:nowrap}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .frow.one{grid-template-columns:1fr}
 select,input[type=text],input[type=date],input[type=number],textarea{
-  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;
-  background:#fff;font-size:15px;appearance:none
-}
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:15px;appearance:none}
 select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%237C8A83' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
 textarea{min-height:76px;resize:vertical}
 label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;font-weight:500}
 .reset{font-size:13px;color:var(--green);font-weight:500;padding:8px 0;margin-top:6px}
 
-/* ---- expense rows ---- */
 .list{overflow:hidden}
 .row{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);width:100%;text-align:left;align-items:flex-start}
 .row:last-child{border-bottom:none}
@@ -133,43 +111,41 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
 .row .t2{font-size:12.5px;color:var(--mute);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .amt{font-family:"IBM Plex Mono",monospace;font-size:15px;text-align:right;flex:none;padding-top:1px}
 .row.out .t1,.row.out .amt{color:var(--mute);text-decoration:line-through;text-decoration-thickness:1px}
-.tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:1px;font-weight:500;letter-spacing:.01em}
+.tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:1px;font-weight:500}
 .tag.p{background:var(--clay-dim);color:var(--clay)}
 .tag.l{background:var(--green-dim);color:var(--green)}
 .empty{padding:44px 20px;text-align:center;color:var(--mute);font-size:14px}
 .empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:5px;font-weight:500}
 .daygroup{font-size:12px;color:var(--mute);padding:14px 16px 6px;background:var(--bg)}
 
-/* ---- sheet / modal ---- */
+/* ---- charts ---- */
+.chartcard{padding:16px 14px 12px;margin-bottom:12px}
+.chartcard h3{font-size:15px;margin-bottom:3px}
+.chartcard p.hint{font-size:12.5px;color:var(--mute);margin:0 0 12px}
+.chartbox{position:relative;height:230px}
+.chartbox.tall{height:280px}
+.legend{display:flex;flex-wrap:wrap;gap:9px 14px;margin-top:12px;font-size:12px;color:var(--ink-soft)}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:0}
+.readout{font-size:12.5px;color:var(--ink-soft);margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+.readout b{font-weight:600}
+
 .scrim{position:fixed;inset:0;background:rgba(18,35,28,.42);z-index:50;opacity:0;pointer-events:none;transition:opacity .18s}
 .scrim.on{opacity:1;pointer-events:auto}
-.sheet{
-  position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--bg);
-  border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;
-  transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);
-  padding-bottom:calc(28px + env(safe-area-inset-bottom))
-}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--bg);border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);padding-bottom:calc(28px + env(safe-area-inset-bottom))}
 .sheet.on{transform:translateY(0)}
 @media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none}}
-.sheet .head{
-  position:sticky;top:0;background:var(--bg);padding:16px var(--pad) 12px;
-  display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);z-index:2
-}
+.sheet .head{position:sticky;top:0;background:var(--bg);padding:16px var(--pad) 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);z-index:2}
 .sheet .head h2{font-size:17px}
 .sheet .head button{font-size:14.5px;color:var(--mute);padding:6px 2px}
 .sheet .grip{width:36px;height:4px;background:var(--line);border-radius:99px;margin:8px auto 0}
 .sheet form,.sheet .content{padding:16px var(--pad) 0;display:grid;gap:13px}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.submit{
-  background:var(--green);color:#fff;padding:15px;border-radius:12px;font-size:15.5px;font-weight:600;
-  margin-top:6px;box-shadow:0 6px 16px -8px rgba(31,111,78,.8)
-}
+.submit{background:var(--green);color:#fff;padding:15px;border-radius:12px;font-size:15.5px;font-weight:600;margin-top:6px;box-shadow:0 6px 16px -8px rgba(31,111,78,.8)}
 .submit:disabled{opacity:.5;box-shadow:none}
 .ghost{border:1px solid var(--line);background:#fff;padding:13px;border-radius:12px;font-size:15px;font-weight:500}
 .ghost.danger{color:var(--clay);border-color:#E4CDB6}
 .err{background:#FBEAEA;color:var(--red);padding:11px 13px;border-radius:10px;font-size:13.5px}
 
-/* detail */
 .dl{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .dl div{display:flex;justify-content:space-between;gap:16px;padding:12px 15px;border-bottom:1px solid var(--line);font-size:14px}
 .dl div:last-child{border-bottom:none}
@@ -179,11 +155,7 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
 .detail-amt .n{font-family:"IBM Plex Mono",monospace;font-size:33px;font-weight:500;letter-spacing:-.02em}
 .detail-amt .d{font-size:14px;color:var(--mute);margin-top:6px}
 
-.toast{
-  position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,14px);
-  background:var(--ink);color:#fff;padding:11px 17px;border-radius:99px;font-size:13.5px;z-index:80;
-  opacity:0;pointer-events:none;transition:.2s;max-width:88vw;text-align:center
-}
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,14px);background:var(--ink);color:#fff;padding:11px 17px;border-radius:99px;font-size:13.5px;z-index:80;opacity:0;pointer-events:none;transition:.2s;max-width:88vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 </style>
 </head>
@@ -226,7 +198,7 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
       <div class="lbl">Reimbursement between you</div>
       <div class="who" id="settleWho">Square</div>
       <div class="amt" id="settleAmt">R0</div>
-      <div class="sub" id="settleNote">Out-of-pocket payments only. Business account spend is excluded.</div>
+      <div class="sub" id="settleNote">Out-of-pocket payments only.</div>
     </div>
 
     <h2 class="sec">Where the money went</h2>
@@ -240,6 +212,48 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
 
     <h2 class="sec">Excluded as personal</h2>
     <div class="card list" id="excludedBox"></div>
+  </section>
+
+  <!-- ============ CHARTS ============ -->
+  <section id="pane-charts" class="pane" hidden>
+    <div class="card filters" style="margin-bottom:14px">
+      <div class="chips" id="chartChips"></div>
+    </div>
+
+    <div class="card chartcard">
+      <h3>Spend by month</h3>
+      <p class="hint">Business expenses only. Excluded entries never appear.</p>
+      <div class="chartbox"><canvas id="cMonthly"></canvas></div>
+      <div class="readout" id="rMonthly"></div>
+    </div>
+
+    <div class="card chartcard">
+      <h3>What it goes on, month by month</h3>
+      <p class="hint">Top six categories stacked. Everything else grouped.</p>
+      <div class="chartbox tall"><canvas id="cStack"></canvas></div>
+      <div class="legend" id="lStack"></div>
+    </div>
+
+    <div class="card chartcard">
+      <h3>Fixed against variable</h3>
+      <p class="hint">Bond, rates, utilities, Wi-Fi, Johanna and the gardener are your floor. The rest is discretionary or unexpected.</p>
+      <div class="chartbox"><canvas id="cFixed"></canvas></div>
+      <div class="readout" id="rFixed"></div>
+    </div>
+
+    <div class="card chartcard">
+      <h3>What each of you has paid in</h3>
+      <p class="hint">Running total of money actually laid out, all time. The gap between the lines is the settlement.</p>
+      <div class="chartbox"><canvas id="cCumul"></canvas></div>
+      <div class="readout" id="rCumul"></div>
+    </div>
+
+    <div class="card chartcard">
+      <h3>Loan account balance</h3>
+      <p class="hint">Running claim against the company, all time. Settled on exit under clauses 18 and 19.</p>
+      <div class="chartbox"><canvas id="cLoan"></canvas></div>
+      <div class="readout" id="rLoan"></div>
+    </div>
   </section>
 
   <!-- ============ EXPENSES ============ -->
@@ -280,6 +294,8 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
 <nav>
   <button id="tab-dash" aria-current="true" type="button">
     <svg viewBox="0 0 24 24"><path d="M4 19V10M10 19V5M16 19v-6M22 19H2"/></svg>Dashboard</button>
+  <button id="tab-charts" type="button">
+    <svg viewBox="0 0 24 24"><path d="M3 3v18h18M7 15l4-5 3 3 5-7"/></svg>Charts</button>
   <button class="fab" id="openAdd" type="button" aria-label="Log an expense"><span>+</span></button>
   <button id="tab-list" type="button">
     <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>Expenses</button>
@@ -287,7 +303,6 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
 
 <div class="scrim" id="scrim"></div>
 
-<!-- ============ ADD SHEET ============ -->
 <div class="sheet" id="addSheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
   <div class="grip"></div>
   <div class="head">
@@ -321,7 +336,6 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
   </form>
 </div>
 
-<!-- ============ DETAIL SHEET ============ -->
 <div class="sheet" id="detSheet" role="dialog" aria-modal="true" aria-labelledby="detTitle">
   <div class="grip"></div>
   <div class="head">
@@ -331,7 +345,6 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
   <div class="content" id="detBody"></div>
 </div>
 
-<!-- ============ EXCLUDE SHEET ============ -->
 <div class="sheet" id="excSheet" role="dialog" aria-modal="true" aria-labelledby="excTitle">
   <div class="grip"></div>
   <div class="head">
@@ -339,7 +352,7 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
     <button type="button" data-close>Cancel</button>
   </div>
   <form id="excForm">
-    <p style="margin:0;font-size:14px;color:var(--ink-soft)">This stays in the register as a record, but drops out of every business total. Say why, so it makes sense when you read it back in a year.</p>
+    <p style="margin:0;font-size:14px;color:var(--ink-soft)">This stays in the register as a record, but drops out of every business total and every chart. Say why, so it makes sense when you read it back in a year.</p>
     <label><span class="f">Reason</span><textarea id="excReason" required placeholder="Agreed 30 Aug — pet costs are the owner's account, cl. 14.3"></textarea></label>
     <button class="submit" type="submit" id="excBtn" style="background:var(--clay);box-shadow:none">Exclude this expense</button>
     <div style="height:8px"></div>
@@ -353,10 +366,11 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
    CONFIG
    ============================================================ */
 const DEFAULT_API = "https://script.google.com/macros/s/AKfycbwn9dkKtAIytnEQbRrkE4a5Ozymo5Bzt7nf7PwIWhP3Jbj2QHplwsAnwyw4cAIhUXWi/exec";
+function apiUrl(){ try { return localStorage.getItem('bv_api') || DEFAULT_API; } catch(e){ return DEFAULT_API; } }
 
-function apiUrl(){
-  try { return localStorage.getItem('bv_api') || DEFAULT_API; } catch(e){ return DEFAULT_API; }
-}
+/* Categories treated as your predictable monthly floor. */
+const FIXED_CATS = ['Bond Instalment','Rates & Taxes','Water & Electricity','Wi-Fi / Fibre',
+                    'Shared Subscriptions','Domestic Worker','Gardener','Insurance'];
 
 /* ============================================================
    STATE
@@ -364,6 +378,8 @@ function apiUrl(){
 let ROWS = [], LISTS = {}, SETTINGS = {};
 let NAME_A = 'Bothma', NAME_B = 'Visser';
 let excludeTarget = null;
+let charts = {};
+let chartMonths = 12;
 
 const filters = { period:'all', from:'', to:'', cat:'', paid:'', split:'', status:'Included', text:'' };
 
@@ -379,9 +395,7 @@ function toast(msg){
   const t = $('toast'); t.textContent = msg; t.classList.add('on');
   clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('on'), 2600);
 }
-function setSync(text, cls){
-  const s = $('sync'); s.textContent = text; s.className = cls||'';
-}
+function setSync(text, cls){ const s = $('sync'); s.textContent = text; s.className = cls||''; }
 function isoDate(v){
   if (!v) return '';
   if (typeof v === 'string') return v.slice(0,10);
@@ -400,6 +414,13 @@ function dayLabel(iso){
   if (iso === y) return 'Yesterday';
   return prettyDate(iso);
 }
+const monthKey = iso => (iso||'').slice(0,7);
+function monthLabel(key){
+  if (!key) return '';
+  const [y,m] = key.split('-');
+  return new Date(Number(y), Number(m)-1, 1).toLocaleDateString('en-ZA',{month:'short'}) + " '" + y.slice(2);
+}
+const included = r => (r['Status']||'Included') === 'Included';
 
 /* ============================================================
    API
@@ -414,7 +435,7 @@ async function apiGet(){
 async function apiPost(payload){
   const res = await fetch(apiUrl(), {
     method:'POST',
-    headers:{'Content-Type':'text/plain;charset=utf-8'}, // avoids CORS preflight
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify(payload)
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -422,7 +443,6 @@ async function apiPost(payload){
   if (!j.ok) throw new Error(j.error || 'Write rejected');
   return j;
 }
-
 async function load(){
   setSync('Syncing…','busy');
   try {
@@ -442,7 +462,7 @@ async function load(){
 }
 
 /* ============================================================
-   OPTION BUILDING
+   OPTIONS
    ============================================================ */
 function fill(sel, arr, opts){
   opts = opts || {};
@@ -455,16 +475,16 @@ function fill(sel, arr, opts){
   else if (opts.def) el.value = opts.def;
 }
 function buildOptions(){
-  fill('fCat',    LISTS['Category'],       {allLabel:'All categories'});
-  fill('fPaid',   LISTS['Paid By'],        {allLabel:'Everyone'});
-  fill('fSplit',  LISTS['Split'],          {allLabel:'All splits'});
+  fill('fCat',    LISTS['Category'],     {allLabel:'All categories'});
+  fill('fPaid',   LISTS['Paid By'],      {allLabel:'Everyone'});
+  fill('fSplit',  LISTS['Split'],        {allLabel:'All splits'});
   fill('aCat',    LISTS['Category']);
   fill('aPaid',   LISTS['Paid By']);
   fill('aMethod', LISTS['Payment Method']);
-  fill('aSplit',  LISTS['Split'],          {def:'50/50'});
-  fill('aAgreed', LISTS['Pre-Agreed'],     {def:'Yes'});
-  fill('aLoan',   LISTS['Loan Account'],   {def:'No'});
-  fill('aRec',    LISTS['Recurring'],      {def:'No'});
+  fill('aSplit',  LISTS['Split'],        {def:'50/50'});
+  fill('aAgreed', LISTS['Pre-Agreed'],   {def:'Yes'});
+  fill('aLoan',   LISTS['Loan Account'], {def:'No'});
+  fill('aRec',    LISTS['Recurring'],    {def:'No'});
   fill('aBy',     LISTS['Logged By']);
   $('lblA').textContent = NAME_A + ' paid';
   $('lblB').textContent = NAME_B + ' paid';
@@ -474,8 +494,7 @@ function buildOptions(){
    FILTERING
    ============================================================ */
 function periodBounds(){
-  const now = new Date();
-  const p = filters.period;
+  const now = new Date(); const p = filters.period;
   const fmt = d => d.toISOString().slice(0,10);
   if (p === 'month')  return [fmt(new Date(now.getFullYear(), now.getMonth(), 1)), fmt(now)];
   if (p === 'last')   return [fmt(new Date(now.getFullYear(), now.getMonth()-1, 1)), fmt(new Date(now.getFullYear(), now.getMonth(), 0))];
@@ -485,8 +504,7 @@ function periodBounds(){
   return ['',''];
 }
 function periodLabel(){
-  const p = filters.period;
-  const [a,b] = periodBounds();
+  const p = filters.period; const [a,b] = periodBounds();
   if (p==='all') return 'All time';
   if (p==='month') return 'This month';
   if (p==='last') return 'Last month';
@@ -497,13 +515,17 @@ function periodLabel(){
   if (b) return 'Up to ' + prettyDate(b);
   return 'Custom range';
 }
-function applyFilters(){
+function inRange(r){
   const [from,to] = periodBounds();
+  const d = isoDate(r['Date']);
+  if (from && d && d < from) return false;
+  if (to && d && d > to) return false;
+  return true;
+}
+function applyFilters(){
   const q = filters.text.trim().toLowerCase();
   return ROWS.filter(r => {
-    const d = isoDate(r['Date']);
-    if (from && d && d < from) return false;
-    if (to && d && d > to) return false;
+    if (!inRange(r)) return false;
     if (filters.cat && r['Category'] !== filters.cat) return false;
     if (filters.paid && r['Paid By'] !== filters.paid) return false;
     if (filters.split && r['Split'] !== filters.split) return false;
@@ -519,19 +541,11 @@ function applyFilters(){
 /* ============================================================
    RENDER
    ============================================================ */
-function render(){ renderDash(); renderList(); }
-
-function inRange(r){
-  const [from,to] = periodBounds();
-  const d = isoDate(r['Date']);
-  if (from && d && d < from) return false;
-  if (to && d && d > to) return false;
-  return true;
-}
+function render(){ renderDash(); renderList(); if (!$('pane-charts').hidden) renderCharts(); }
 
 function renderDash(){
   const scope = ROWS.filter(inRange);
-  const inc = scope.filter(r => (r['Status']||'Included') === 'Included');
+  const inc = scope.filter(included);
   const exc = scope.filter(r => r['Status'] === 'Excluded');
 
   const total = inc.reduce((s,r) => s + (Number(r['Amount'])||0), 0);
@@ -550,15 +564,12 @@ function renderDash(){
   $('shareA').textContent = 'owes ' + money0(shA) + ' of the total';
   $('shareB').textContent = 'owes ' + money0(shB) + ' of the total';
 
-  // settlement: out-of-pocket only (rows not paid from the Business Account)
   const oop = inc.filter(r => r['Paid By']===NAME_A || r['Paid By']===NAME_B);
-  let bal = 0; // positive => B owes A
+  let bal = 0;
   oop.forEach(r => {
     const amt = Number(r['Amount'])||0;
-    const sA = Number(r['Bothma Share'])||0;
-    const sB = Number(r['Visser Share'])||0;
-    if (r['Paid By']===NAME_A) bal += (amt - sA);
-    else bal -= (amt - sB);
+    if (r['Paid By']===NAME_A) bal += (amt - (Number(r['Bothma Share'])||0));
+    else bal -= (amt - (Number(r['Visser Share'])||0));
   });
   const st = $('settle');
   if (Math.abs(bal) < 0.01){
@@ -574,7 +585,6 @@ function renderDash(){
     ? 'Based on ' + oop.length + ' out-of-pocket ' + (oop.length===1?'payment':'payments') + '. Business account spend is left out.'
     : 'Nothing paid out of pocket in this period.';
 
-  // by category
   const cat = {};
   inc.forEach(r => { const k = r['Category']||'Uncategorised'; cat[k] = (cat[k]||0) + (Number(r['Amount'])||0); });
   const cats = Object.entries(cat).sort((a,b)=>b[1]-a[1]);
@@ -586,7 +596,6 @@ function renderDash(){
       <small>${total ? ((v/total)*100).toFixed(1) : 0}% of spend</small>
     </div>`).join('') : `<div class="empty"><b>No spend yet</b>Log something and the breakdown fills in.</div>`;
 
-  // by payer
   const pay = {};
   inc.forEach(r => { const k = r['Paid By']||'Unspecified'; pay[k] = (pay[k]||0) + (Number(r['Amount'])||0); });
   const pays = Object.entries(pay).sort((a,b)=>b[1]-a[1]);
@@ -597,23 +606,14 @@ function renderDash(){
       <div class="track"><div class="fill" style="width:${Math.max(2,(v/pmax)*100)}%"></div></div>
     </div>`).join('') : `<div class="empty">Nothing recorded.</div>`;
 
-  // loan account (all time, not period-bound — it is a running balance)
-  const loanRows = ROWS.filter(r => (r['Status']||'Included')==='Included' && String(r['Loan Account']||'').startsWith('Credit'));
-  const loan = {};
-  loanRows.forEach(r => {
-    const who = String(r['Loan Account']).replace('Credit - ','').trim();
-    const amt = Number(r['Amount'])||0;
-    const own = who===NAME_A ? (Number(r['Bothma Share'])||0) : (Number(r['Visser Share'])||0);
-    loan[who] = (loan[who]||0) + Math.max(0, amt - own);
-  });
-  const loans = Object.entries(loan);
+  const loan = loanTotals();
+  const loans = Object.entries(loan).filter(([,v]) => v > 0.005);
   $('byLoan').innerHTML = loans.length ? loans.map(([k,v]) => `
     <div class="bar">
       <div class="top"><span>${esc(k)} — claim against the company</span><b class="num">${money(v)}</b></div>
       <small>Running total, all time. Settled on exit under clauses 18 and 19.</small>
     </div>`).join('') : `<div class="empty"><b>No loan account entries</b>Flag an expense as a loan account credit when one of you pays above his half.</div>`;
 
-  // excluded
   const excTotal = exc.reduce((s,r)=>s+(Number(r['Amount'])||0),0);
   $('excludedBox').innerHTML = exc.length ? `
     <div class="bar">
@@ -622,9 +622,25 @@ function renderDash(){
     </div>` : `<div class="empty">Nothing excluded in this period.</div>`;
 }
 
+function loanExcess(r){
+  const who = String(r['Loan Account']||'').replace('Credit - ','').trim();
+  if (!who) return [null, 0];
+  const amt = Number(r['Amount'])||0;
+  const own = who===NAME_A ? (Number(r['Bothma Share'])||0) : (Number(r['Visser Share'])||0);
+  return [who, Math.max(0, amt - own)];
+}
+function loanTotals(){
+  const loan = {};
+  ROWS.filter(r => included(r) && String(r['Loan Account']||'').startsWith('Credit')).forEach(r => {
+    const [who, v] = loanExcess(r);
+    if (who) loan[who] = (loan[who]||0) + v;
+  });
+  return loan;
+}
+
 function renderList(){
   const rows = applyFilters();
-  const total = rows.filter(r=>(r['Status']||'Included')==='Included').reduce((s,r)=>s+(Number(r['Amount'])||0),0);
+  const total = rows.filter(included).reduce((s,r)=>s+(Number(r['Amount'])||0),0);
   $('countLbl').textContent = rows.length + (rows.length===1?' entry':' entries') + ' · ' + periodLabel().toLowerCase();
   $('filteredTotal').textContent = money0(total);
 
@@ -652,13 +668,212 @@ function renderList(){
 }
 
 /* ============================================================
+   CHARTS
+   ============================================================ */
+const PALETTE = ['#1F6F4E','#9A5B2B','#3E6E8E','#7B5EA7','#B08A2E','#2F8F7F','#A0526D','#6C7A89'];
+
+function chartFont(){ return { family:"'IBM Plex Sans', system-ui, sans-serif", size:11 }; }
+function baseOpts(){
+  return {
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{
+      legend:{ display:false },
+      tooltip:{
+        backgroundColor:'#12231C', padding:10, cornerRadius:8,
+        titleFont:chartFont(), bodyFont:chartFont(), displayColors:true, boxPadding:4,
+        callbacks:{ label: c => ' ' + (c.dataset.label ? c.dataset.label + ': ' : '') + money(c.parsed.y) }
+      }
+    },
+    scales:{
+      x:{ grid:{ display:false }, ticks:{ font:chartFont(), color:'#7C8A83', maxRotation:0, autoSkipPadding:8 }, border:{ color:'#DDE3DF' } },
+      y:{ beginAtZero:true, grid:{ color:'#EDF1EF' }, border:{ display:false },
+          ticks:{ font:chartFont(), color:'#7C8A83', maxTicksLimit:6, callback: v => 'R' + (v>=1000 ? (v/1000)+'k' : v) } }
+    }
+  };
+}
+function draw(key, canvasId, config){
+  if (charts[key]) charts[key].destroy();
+  charts[key] = new Chart($(canvasId), config);
+}
+function noData(key, canvasId, readoutId, msg){
+  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+  const c = $(canvasId);
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  if (readoutId) $(readoutId).textContent = msg;
+}
+
+/* Build the trailing month buckets, oldest first. */
+function monthSeries(n){
+  const keys = [];
+  const now = new Date();
+  for (let i = n-1; i >= 0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    keys.push(d.toISOString().slice(0,7));
+  }
+  return keys;
+}
+
+function renderCharts(){
+  const inc = ROWS.filter(included);
+  const keys = monthSeries(chartMonths);
+  const labels = keys.map(monthLabel);
+
+  /* ---------- 1. monthly totals ---------- */
+  const byMonth = {};
+  inc.forEach(r => { const k = monthKey(isoDate(r['Date'])); if(k) byMonth[k] = (byMonth[k]||0) + (Number(r['Amount'])||0); });
+  const monthVals = keys.map(k => byMonth[k] || 0);
+  const nonZero = monthVals.filter(v => v > 0);
+
+  if (!nonZero.length){
+    noData('monthly','cMonthly','rMonthly','Nothing logged in this window yet.');
+  } else {
+    draw('monthly','cMonthly',{
+      type:'bar',
+      data:{ labels, datasets:[{ data:monthVals, backgroundColor:'#1F6F4E', borderRadius:5, maxBarThickness:44 }] },
+      options: baseOpts()
+    });
+    const avg = nonZero.reduce((a,b)=>a+b,0)/nonZero.length;
+    const peakIdx = monthVals.indexOf(Math.max(...monthVals));
+    $('rMonthly').innerHTML = `Average <b>${money0(avg)}</b> across ${nonZero.length} month${nonZero.length===1?'':'s'} with activity. `
+      + `Heaviest was ${labels[peakIdx]} at <b>${money0(monthVals[peakIdx])}</b>.`;
+  }
+
+  /* ---------- 2. stacked categories ---------- */
+  const catTotals = {};
+  inc.forEach(r => { const c = r['Category']||'Other'; catTotals[c] = (catTotals[c]||0) + (Number(r['Amount'])||0); });
+  const topCats = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>e[0]);
+  const hasOther = Object.keys(catTotals).length > topCats.length;
+  const series = topCats.concat(hasOther ? ['Everything else'] : []);
+
+  if (!nonZero.length){
+    noData('stack','cStack', null, '');
+    $('lStack').innerHTML = '';
+  } else {
+    const datasets = series.map((name, i) => ({
+      label: name,
+      backgroundColor: PALETTE[i % PALETTE.length],
+      borderRadius: 3,
+      maxBarThickness: 44,
+      data: keys.map(k => inc.filter(r => {
+        if (monthKey(isoDate(r['Date'])) !== k) return false;
+        const c = r['Category']||'Other';
+        return name === 'Everything else' ? !topCats.includes(c) : c === name;
+      }).reduce((s,r)=>s+(Number(r['Amount'])||0),0))
+    }));
+    const o = baseOpts();
+    o.scales.x.stacked = true; o.scales.y.stacked = true;
+    o.plugins.tooltip.callbacks.label = c => c.parsed.y > 0 ? ' ' + c.dataset.label + ': ' + money(c.parsed.y) : null;
+    draw('stack','cStack',{ type:'bar', data:{ labels, datasets }, options:o });
+    $('lStack').innerHTML = series.map((n,i) =>
+      `<span><i style="background:${PALETTE[i%PALETTE.length]}"></i>${esc(n)}</span>`).join('');
+  }
+
+  /* ---------- 3. fixed vs variable ---------- */
+  if (!nonZero.length){
+    noData('fixed','cFixed','rFixed','Nothing logged in this window yet.');
+  } else {
+    const fixedVals = keys.map(k => inc.filter(r => monthKey(isoDate(r['Date']))===k && FIXED_CATS.includes(r['Category'])).reduce((s,r)=>s+(Number(r['Amount'])||0),0));
+    const varVals   = keys.map(k => inc.filter(r => monthKey(isoDate(r['Date']))===k && !FIXED_CATS.includes(r['Category'])).reduce((s,r)=>s+(Number(r['Amount'])||0),0));
+    const o = baseOpts();
+    o.scales.x.stacked = true; o.scales.y.stacked = true;
+    draw('fixed','cFixed',{
+      type:'bar',
+      data:{ labels, datasets:[
+        { label:'Fixed', data:fixedVals, backgroundColor:'#1F6F4E', borderRadius:3, maxBarThickness:44 },
+        { label:'Variable', data:varVals, backgroundColor:'#C9D6CF', borderRadius:3, maxBarThickness:44 }
+      ]},
+      options:o
+    });
+    const fTot = fixedVals.reduce((a,b)=>a+b,0), vTot = varVals.reduce((a,b)=>a+b,0);
+    const months = nonZero.length || 1;
+    $('rFixed').innerHTML = fTot+vTot > 0
+      ? `Your monthly floor averages <b>${money0(fTot/months)}</b>. Variable spend adds <b>${money0(vTot/months)}</b> on top, `
+        + `or <b>${Math.round(vTot/(fTot+vTot)*100)}%</b> of everything.`
+      : 'Not enough data yet.';
+  }
+
+  /* ---------- 4. cumulative out-of-pocket ---------- */
+  const oop = inc.filter(r => r['Paid By']===NAME_A || r['Paid By']===NAME_B)
+                 .sort((a,b) => (isoDate(a['Date'])||'').localeCompare(isoDate(b['Date'])||''));
+  if (!oop.length){
+    noData('cumul','cCumul','rCumul','Neither of you has paid anything out of pocket yet. Everything so far ran through the business account.');
+  } else {
+    const allKeys = monthSeries(Math.max(chartMonths, 2));
+    let ca = 0, cb = 0;
+    const sa = [], sb = [];
+    allKeys.forEach(k => {
+      oop.filter(r => monthKey(isoDate(r['Date'])) === k).forEach(r => {
+        const amt = Number(r['Amount'])||0;
+        if (r['Paid By']===NAME_A) ca += amt; else cb += amt;
+      });
+      sa.push(ca); sb.push(cb);
+    });
+    const o = baseOpts();
+    o.plugins.legend = { display:true, position:'bottom', labels:{ font:chartFont(), color:'#3D4F47', usePointStyle:true, pointStyle:'circle', boxWidth:7, padding:14 } };
+    draw('cumul','cCumul',{
+      type:'line',
+      data:{ labels: allKeys.map(monthLabel), datasets:[
+        { label:NAME_A, data:sa, borderColor:'#1F6F4E', backgroundColor:'#1F6F4E', tension:.25, borderWidth:2, pointRadius:2.5 },
+        { label:NAME_B, data:sb, borderColor:'#9A5B2B', backgroundColor:'#9A5B2B', tension:.25, borderWidth:2, pointRadius:2.5 }
+      ]},
+      options:o
+    });
+    const gap = ca - cb;
+    $('rCumul').innerHTML = Math.abs(gap) < 0.01
+      ? `Dead level at <b>${money0(ca)}</b> each.`
+      : `${esc(gap>0?NAME_A:NAME_B)} has laid out <b>${money0(Math.abs(gap))}</b> more in total. `
+        + `That is not the same as what is owed — the dashboard settlement figure accounts for each side's share.`;
+  }
+
+  /* ---------- 5. loan account over time ---------- */
+  const loanRows = ROWS.filter(r => included(r) && String(r['Loan Account']||'').startsWith('Credit'))
+                       .sort((a,b) => (isoDate(a['Date'])||'').localeCompare(isoDate(b['Date'])||''));
+  if (!loanRows.length){
+    noData('loan','cLoan','rLoan','No loan account entries yet. Flag one when either of you funds more than his half of an agreed improvement or covers the other\u2019s shortfall.');
+  } else {
+    const allKeys = monthSeries(Math.max(chartMonths, 2));
+    let la = 0, lb = 0; const da = [], db = [];
+    allKeys.forEach(k => {
+      loanRows.filter(r => monthKey(isoDate(r['Date'])) === k).forEach(r => {
+        const [who, v] = loanExcess(r);
+        if (who === NAME_A) la += v; else if (who === NAME_B) lb += v;
+      });
+      da.push(la); db.push(lb);
+    });
+    const o = baseOpts();
+    o.plugins.legend = { display:true, position:'bottom', labels:{ font:chartFont(), color:'#3D4F47', usePointStyle:true, pointStyle:'circle', boxWidth:7, padding:14 } };
+    draw('loan','cLoan',{
+      type:'line',
+      data:{ labels: allKeys.map(monthLabel), datasets:[
+        { label:NAME_A, data:da, borderColor:'#1F6F4E', backgroundColor:'rgba(31,111,78,.08)', fill:true, stepped:true, borderWidth:2, pointRadius:0 },
+        { label:NAME_B, data:db, borderColor:'#9A5B2B', backgroundColor:'rgba(154,91,43,.08)', fill:true, stepped:true, borderWidth:2, pointRadius:0 }
+      ]},
+      options:o
+    });
+    const net = la - lb;
+    $('rLoan').innerHTML = Math.abs(net) < 0.01
+      ? `The two claims cancel out at <b>${money0(la)}</b> each.`
+      : `Net position favours <b>${esc(net>0?NAME_A:NAME_B)}</b> by <b>${money0(Math.abs(net))}</b> on any exit.`;
+  }
+}
+
+/* chart window chips */
+const WINDOWS = [[6,'6 months'],[12,'12 months'],[24,'24 months']];
+$('chartChips').innerHTML = WINDOWS.map(([k,l]) =>
+  `<button class="chip" type="button" data-m="${k}" aria-pressed="${k===chartMonths}">${l}</button>`).join('');
+$('chartChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  chartMonths = Number(b.dataset.m);
+  [...$('chartChips').children].forEach(c => c.setAttribute('aria-pressed', c===b));
+  renderCharts();
+});
+
+/* ============================================================
    SHEETS
    ============================================================ */
-function openSheet(id){
-  $('scrim').classList.add('on');
-  $(id).classList.add('on');
-  document.body.style.overflow = 'hidden';
-}
+function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); document.body.style.overflow='hidden'; }
 function closeSheets(){
   $('scrim').classList.remove('on');
   ['addSheet','detSheet','excSheet'].forEach(i => $(i).classList.remove('on'));
@@ -668,7 +883,6 @@ $('scrim').addEventListener('click', closeSheets);
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
 
-/* ---- detail ---- */
 function openDetail(id){
   const r = ROWS.find(x => String(x.ID) === String(id));
   if (!r) return;
@@ -719,7 +933,6 @@ $('rows').addEventListener('click', e => {
   const btn = e.target.closest('.row'); if (btn) openDetail(btn.dataset.id);
 });
 
-/* ---- exclude ---- */
 $('excForm').addEventListener('submit', async e => {
   e.preventDefault();
   const reason = $('excReason').value.trim();
@@ -734,16 +947,11 @@ $('excForm').addEventListener('submit', async e => {
   finally { btn.disabled = false; btn.textContent = 'Exclude this expense'; excludeTarget = null; }
 });
 
-/* ---- add ---- */
 $('openAdd').addEventListener('click', () => {
   $('addErr').hidden = true;
   $('aDate').value = new Date().toISOString().slice(0,10);
   openSheet('addSheet');
   setTimeout(()=>$('aDesc').focus(), 300);
-});
-$('aSplit').addEventListener('change', () => {
-  const v = $('aSplit').value;
-  if (v.startsWith('Personal')) toast('Personal splits are usually excluded too — you can do that from the entry.');
 });
 $('addForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -807,16 +1015,20 @@ $('resetFilters').addEventListener('click', () => {
 
 /* ---- tabs ---- */
 function showTab(which){
-  $('pane-dash').hidden = which !== 'dash';
-  $('pane-list').hidden = which !== 'list';
+  $('pane-dash').hidden   = which !== 'dash';
+  $('pane-charts').hidden = which !== 'charts';
+  $('pane-list').hidden   = which !== 'list';
   $('tab-dash').setAttribute('aria-current', which==='dash');
+  $('tab-charts').setAttribute('aria-current', which==='charts');
   $('tab-list').setAttribute('aria-current', which==='list');
+  if (which === 'charts') renderCharts();
   window.scrollTo(0,0);
 }
 $('tab-dash').addEventListener('click', ()=>showTab('dash'));
+$('tab-charts').addEventListener('click', ()=>showTab('charts'));
 $('tab-list').addEventListener('click', ()=>showTab('list'));
 
-/* ---- sync button: tap to refresh, long-press to change the API url ---- */
+/* ---- sync: tap to refresh, long-press to change the API url ---- */
 $('sync').addEventListener('click', load);
 let press;
 $('sync').addEventListener('pointerdown', () => {
