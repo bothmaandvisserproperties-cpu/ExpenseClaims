@@ -155,6 +155,27 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
 .detail-amt .n{font-family:"IBM Plex Mono",monospace;font-size:33px;font-weight:500;letter-spacing:-.02em}
 .detail-amt .d{font-size:14px;color:var(--mute);margin-top:6px}
 
+/* ---- receipts ---- */
+.shots{display:flex;gap:9px;flex-wrap:wrap;margin-top:2px}
+.shot{position:relative;width:74px;height:74px;border-radius:11px;overflow:hidden;border:1px solid var(--line);background:#fff;flex:none}
+.shot img{width:100%;height:100%;object-fit:cover;display:block}
+.shot .x{position:absolute;top:3px;right:3px;width:21px;height:21px;border-radius:50%;background:rgba(18,35,28,.78);color:#fff;font-size:13px;line-height:21px;text-align:center;padding:0}
+.shot.pending{display:grid;place-items:center;font-size:10.5px;color:var(--mute);text-align:center;padding:4px}
+.addshot{
+  width:74px;height:74px;border-radius:11px;border:1px dashed #BDCAC3;background:#fff;
+  display:grid;place-items:center;gap:3px;color:var(--green);font-size:10.5px;font-weight:500;flex:none
+}
+.addshot svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.shotgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:9px}
+.shotgrid button{border-radius:11px;overflow:hidden;border:1px solid var(--line);aspect-ratio:1;background:#fff;padding:0}
+.shotgrid img{width:100%;height:100%;object-fit:cover;display:block}
+.viewer{position:fixed;inset:0;background:rgba(10,18,15,.94);z-index:90;display:none;place-items:center;padding:20px}
+.viewer.on{display:grid}
+.viewer img{max-width:100%;max-height:82vh;border-radius:10px}
+.viewer .close{position:absolute;top:calc(14px + env(safe-area-inset-top));right:16px;color:#fff;font-size:15px;padding:9px 13px;border:1px solid rgba(255,255,255,.28);border-radius:99px}
+.viewer .bin{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom));color:#F0B4B4;font-size:14.5px;padding:10px 18px;border:1px solid rgba(240,180,180,.32);border-radius:99px}
+.editnote{font-size:12.5px;color:var(--mute);background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+.editnote b{color:var(--ink-soft);font-weight:600}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,14px);background:var(--ink);color:#fff;padding:11px 17px;border-radius:99px;font-size:13.5px;z-index:80;opacity:0;pointer-events:none;transition:.2s;max-width:88vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -328,7 +349,10 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
       <label><span class="f">Loan account</span><select id="aLoan"></select></label>
     </div>
     <label><span class="f">Recurring</span><select id="aRec"></select></label>
-    <label><span class="f">Receipt link (optional)</span><input type="text" id="aReceipt" placeholder="Paste a photo link"></label>
+    <label><span class="f">Receipt photos</span>
+      <div class="shots" id="aShots"></div>
+    </label>
+    <input type="file" id="aFile" accept="image/*" capture="environment" multiple hidden>
     <label><span class="f">Notes (optional)</span><textarea id="aNotes" placeholder="Anything worth remembering later"></textarea></label>
     <label><span class="f">Logged by</span><select id="aBy" required></select></label>
     <button class="submit" type="submit" id="addBtn">Save expense</button>
@@ -357,6 +381,49 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
     <button class="submit" type="submit" id="excBtn" style="background:var(--clay);box-shadow:none">Exclude this expense</button>
     <div style="height:8px"></div>
   </form>
+</div>
+
+<div class="sheet" id="editSheet" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="grip"></div>
+  <div class="head">
+    <h2 id="editTitle">Edit entry</h2>
+    <button type="button" data-close>Cancel</button>
+  </div>
+  <form id="editForm">
+    <div id="editErr" class="err" hidden></div>
+    <label><span class="f">What was it?</span><input type="text" id="eDesc" required></label>
+    <div class="pair">
+      <label><span class="f">Amount (R)</span><input type="number" id="eAmt" step="0.01" min="0" required inputmode="decimal"></label>
+      <label><span class="f">Date</span><input type="date" id="eDate" required></label>
+    </div>
+    <label><span class="f">Where</span><input type="text" id="eMerch"></label>
+    <label><span class="f">Category</span><select id="eCat" required></select></label>
+    <div class="pair">
+      <label><span class="f">Paid by</span><select id="ePaid" required></select></label>
+      <label><span class="f">How</span><select id="eMethod"></select></label>
+    </div>
+    <label><span class="f">Split</span><select id="eSplit" required></select></label>
+    <div class="pair" id="eCustomShares" hidden>
+      <label><span class="f" id="eLblA">Share A</span><input type="number" id="eShareA" step="0.01" inputmode="decimal"></label>
+      <label><span class="f" id="eLblB">Share B</span><input type="number" id="eShareB" step="0.01" inputmode="decimal"></label>
+    </div>
+    <div class="pair">
+      <label><span class="f">Agreed in advance</span><select id="eAgreed"></select></label>
+      <label><span class="f">Loan account</span><select id="eLoan"></select></label>
+    </div>
+    <label><span class="f">Recurring</span><select id="eRec"></select></label>
+    <label><span class="f">Notes</span><textarea id="eNotes"></textarea></label>
+    <label><span class="f">Logged by</span><select id="eBy" required></select></label>
+    <div class="editnote" id="eMeta"></div>
+    <button class="submit" type="submit" id="editBtn">Save changes</button>
+    <div style="height:8px"></div>
+  </form>
+</div>
+
+<div class="viewer" id="viewer">
+  <button class="close" type="button" id="viewerClose">Close</button>
+  <img id="viewerImg" alt="Receipt">
+  <button class="bin" type="button" id="viewerDelete">Delete this receipt</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -871,12 +938,114 @@ $('chartChips').addEventListener('click', e => {
 });
 
 /* ============================================================
+   RECEIPTS
+   ============================================================ */
+const MAX_EDGE = 1600, JPEG_Q = 0.72;
+let pendingShots = [];      // {localUrl, dataUri} queued on the add form
+let receiptCache = {};      // fileId -> dataUri
+let viewerCtx = null;       // {id, fileId}
+
+/* Shrink and re-encode before upload so a 4MB phone photo becomes ~200KB. */
+function compress(file){
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error('Could not read that image'));
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('That file is not a readable image'));
+      img.onload = () => {
+        let { width:w, height:h } = img;
+        if (Math.max(w,h) > MAX_EDGE){
+          const k = MAX_EDGE / Math.max(w,h);
+          w = Math.round(w*k); h = Math.round(h*k);
+        }
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        const cx = cv.getContext('2d');
+        cx.fillStyle = '#fff'; cx.fillRect(0,0,w,h);
+        cx.drawImage(img, 0, 0, w, h);
+        resolve(cv.toDataURL('image/jpeg', JPEG_Q));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+async function uploadShot(dataUri, expenseId, name){
+  return apiPost({ action:'upload', dataUri, id: expenseId || '', name: name || 'receipt' });
+}
+
+function fileIds(r){
+  return String((r && r['Receipt File ID']) || '').split(',').map(x=>x.trim()).filter(Boolean);
+}
+
+async function fetchReceipt(fileId){
+  if (receiptCache[fileId]) return receiptCache[fileId];
+  const res = await fetch(apiUrl() + '?action=receipt&id=' + encodeURIComponent(fileId));
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'Could not load that receipt');
+  receiptCache[fileId] = j.dataUri;
+  return j.dataUri;
+}
+
+/* ---- add-form thumbnail strip ---- */
+function renderPendingShots(){
+  const box = $('aShots');
+  box.innerHTML = pendingShots.map((p,i) =>
+    `<div class="shot"><img src="${p.dataUri}" alt=""><button class="x" type="button" data-rm="${i}" aria-label="Remove">&times;</button></div>`
+  ).join('') + `<button class="addshot" type="button" id="aShotAdd">
+      <svg viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 015.5 6h1.8l1.2-2h6l1.2 2h1.8A2.5 2.5 0 0120 8.5v8A2.5 2.5 0 0117.5 19h-11A2.5 2.5 0 014 16.5z"/><circle cx="12" cy="12.5" r="3.2"/></svg>
+      Add photo</button>`;
+}
+$('aShots').addEventListener('click', e => {
+  const rm = e.target.closest('[data-rm]');
+  if (rm){ pendingShots.splice(Number(rm.dataset.rm),1); renderPendingShots(); return; }
+  if (e.target.closest('#aShotAdd')) $('aFile').click();
+});
+$('aFile').addEventListener('change', async e => {
+  const files = [...e.target.files];
+  e.target.value = '';
+  for (const f of files){
+    try {
+      const dataUri = await compress(f);
+      pendingShots.push({ dataUri });
+      renderPendingShots();
+    } catch(err){ toast(err.message); }
+  }
+});
+
+/* ---- viewer ---- */
+function openViewer(id, fileId, dataUri){
+  viewerCtx = { id, fileId };
+  $('viewerImg').src = dataUri;
+  $('viewer').classList.add('on');
+}
+$('viewerClose').addEventListener('click', () => { $('viewer').classList.remove('on'); viewerCtx = null; });
+$('viewer').addEventListener('click', e => { if (e.target.id === 'viewer'){ $('viewer').classList.remove('on'); viewerCtx = null; } });
+$('viewerDelete').addEventListener('click', async () => {
+  if (!viewerCtx) return;
+  const btn = $('viewerDelete'); btn.disabled = true; btn.textContent = 'Deleting…';
+  try {
+    const j = await apiPost({ action:'deleteReceipt', id: viewerCtx.id, fileId: viewerCtx.fileId });
+    const r = ROWS.find(x => String(x.ID) === String(viewerCtx.id));
+    if (r) r['Receipt File ID'] = (j.remaining||[]).join(',');
+    delete receiptCache[viewerCtx.fileId];
+    $('viewer').classList.remove('on');
+    const keep = viewerCtx.id; viewerCtx = null;
+    openDetail(keep);
+    toast('Receipt deleted');
+  } catch(e){ toast(e.message); }
+  finally { btn.disabled = false; btn.textContent = 'Delete this receipt'; }
+});
+
+/* ============================================================
    SHEETS
    ============================================================ */
 function openSheet(id){ $('scrim').classList.add('on'); $(id).classList.add('on'); document.body.style.overflow='hidden'; }
 function closeSheets(){
   $('scrim').classList.remove('on');
-  ['addSheet','detSheet','excSheet'].forEach(i => $(i).classList.remove('on'));
+  ['addSheet','detSheet','excSheet','editSheet'].forEach(i => $(i).classList.remove('on'));
   document.body.style.overflow = '';
 }
 $('scrim').addEventListener('click', closeSheets);
@@ -911,11 +1080,34 @@ function openDetail(id){
       ${field('Reason excluded', r['Exclusion Reason'])}
       <div><dt>Reference</dt><dd class="num" style="font-size:12px">${esc(r.ID)}</dd></div>
     </dl>
-    ${r['Receipt URL'] ? `<a class="ghost" style="display:block;text-align:center;text-decoration:none" href="${esc(r['Receipt URL'])}" target="_blank" rel="noopener">Open the receipt</a>` : ''}
+    <div id="detShots"></div>
+    <input type="file" id="dFile" accept="image/*" capture="environment" multiple hidden>
+    <button class="ghost" id="detAddShot" type="button">Add a receipt photo</button>
+    ${r['Receipt URL'] ? `<a class="ghost" style="display:block;text-align:center;text-decoration:none" href="${esc(r['Receipt URL'])}" target="_blank" rel="noopener">Open the linked receipt</a>` : ''}
+    <button class="ghost" id="detEdit" type="button">Edit this entry</button>
     ${out
       ? `<button class="ghost" id="detInclude" type="button">Put back on the business</button>`
       : `<button class="ghost danger" id="detExclude" type="button">Move to personal</button>`}
     <div style="height:8px"></div>`;
+
+  loadDetailShots(r);
+  $('detAddShot').addEventListener('click', () => $('dFile').click());
+  $('dFile').addEventListener('change', async e => {
+    const files = [...e.target.files]; e.target.value = '';
+    const btn = $('detAddShot');
+    for (let i = 0; i < files.length; i++){
+      btn.disabled = true; btn.textContent = `Uploading ${i+1} of ${files.length}…`;
+      try {
+        const dataUri = await compress(files[i]);
+        const j = await uploadShot(dataUri, r.ID, (r['Description']||'receipt').slice(0,40));
+        receiptCache[j.fileId] = dataUri;
+        r['Receipt File ID'] = [...fileIds(r), j.fileId].join(',');
+        loadDetailShots(r);
+      } catch(err){ toast(err.message); }
+    }
+    btn.disabled = false; btn.textContent = 'Add a receipt photo';
+  });
+  $('detEdit').addEventListener('click', () => { closeSheets(); setTimeout(()=>openEdit(r.ID), 220); });
 
   const ex = $('detExclude'), inc = $('detInclude');
   if (ex) ex.addEventListener('click', () => { excludeTarget = r.ID; closeSheets(); setTimeout(()=>{ $('excReason').value=''; openSheet('excSheet'); }, 220); });
@@ -931,6 +1123,101 @@ function openDetail(id){
 }
 $('rows').addEventListener('click', e => {
   const btn = e.target.closest('.row'); if (btn) openDetail(btn.dataset.id);
+});
+
+/* Loads each receipt thumbnail one at a time so the sheet opens instantly. */
+async function loadDetailShots(r){
+  const box = $('detShots'); if (!box) return;
+  const ids = fileIds(r);
+  if (!ids.length){ box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="shotgrid">` + ids.map(id =>
+    `<button type="button" data-fid="${esc(id)}" class="pendingshot"><div class="shot pending" style="width:100%;height:100%">Loading</div></button>`).join('') + `</div>`;
+  box.onclick = e => {
+    const b = e.target.closest('[data-fid]');
+    if (b && receiptCache[b.dataset.fid]) openViewer(r.ID, b.dataset.fid, receiptCache[b.dataset.fid]);
+  };
+  for (const id of ids){
+    try {
+      const uri = await fetchReceipt(id);
+      const b = box.querySelector(`[data-fid="${id}"]`);
+      if (b) b.innerHTML = `<img src="${uri}" alt="Receipt">`;
+    } catch(e){
+      const b = box.querySelector(`[data-fid="${id}"]`);
+      if (b) b.innerHTML = `<div class="shot pending" style="width:100%;height:100%">Unavailable</div>`;
+    }
+  }
+}
+
+/* ---- edit ---- */
+let editTarget = null;
+function openEdit(id){
+  const r = ROWS.find(x => String(x.ID) === String(id));
+  if (!r) return;
+  editTarget = id;
+  $('editErr').hidden = true;
+
+  fill('eCat',    LISTS['Category']);
+  fill('ePaid',   LISTS['Paid By']);
+  fill('eMethod', LISTS['Payment Method']);
+  fill('eSplit',  LISTS['Split']);
+  fill('eAgreed', LISTS['Pre-Agreed']);
+  fill('eLoan',   LISTS['Loan Account']);
+  fill('eRec',    LISTS['Recurring']);
+  fill('eBy',     LISTS['Logged By']);
+
+  const set = (el, v) => { const n = $(el); if (n) n.value = (v==null?'':v); };
+  set('eDesc', r['Description']); set('eAmt', r['Amount']); set('eDate', isoDate(r['Date']));
+  set('eMerch', r['Merchant']); set('eCat', r['Category']); set('ePaid', r['Paid By']);
+  set('eMethod', r['Payment Method']); set('eSplit', r['Split']); set('eAgreed', r['Pre-Agreed']);
+  set('eLoan', r['Loan Account']); set('eRec', r['Recurring']); set('eNotes', r['Notes']);
+  set('eBy', r['Logged By']);
+  set('eShareA', r['Bothma Share']); set('eShareB', r['Visser Share']);
+  $('eLblA').textContent = NAME_A + "'s share (R)";
+  $('eLblB').textContent = NAME_B + "'s share (R)";
+  toggleCustom();
+
+  $('eMeta').innerHTML = `<b>${esc(r.ID)}</b> · logged ${esc(r['Timestamp']||'—')}`
+    + (r['Last Modified'] && r['Last Modified'] !== r['Timestamp'] ? ` · last changed ${esc(r['Last Modified'])}` : '')
+    + `<br>Reference, timestamps and the calculated shares are set by the app and stay as they are.`;
+  openSheet('editSheet');
+}
+function toggleCustom(){ $('eCustomShares').hidden = $('eSplit').value !== 'Custom'; }
+$('eSplit').addEventListener('change', toggleCustom);
+
+$('editForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!editTarget) return;
+  const btn = $('editBtn'); btn.disabled = true; btn.textContent = 'Saving…';
+  $('editErr').hidden = true;
+  const patch = {
+    'Date': $('eDate').value,
+    'Description': $('eDesc').value.trim(),
+    'Merchant': $('eMerch').value.trim(),
+    'Category': $('eCat').value,
+    'Amount': Number($('eAmt').value),
+    'Paid By': $('ePaid').value,
+    'Payment Method': $('eMethod').value,
+    'Split': $('eSplit').value,
+    'Pre-Agreed': $('eAgreed').value,
+    'Loan Account': $('eLoan').value,
+    'Recurring': $('eRec').value,
+    'Notes': $('eNotes').value.trim(),
+    'Logged By': $('eBy').value
+  };
+  if (patch['Split'] === 'Custom'){
+    patch['Bothma Share'] = Number($('eShareA').value) || 0;
+    patch['Visser Share'] = Number($('eShareB').value) || 0;
+  }
+  try {
+    const j = await apiPost({ action:'update', id: editTarget, row: patch });
+    const i = ROWS.findIndex(x => String(x.ID) === String(editTarget));
+    if (i > -1) ROWS[i] = j.row;
+    closeSheets(); render(); toast('Changes saved');
+    editTarget = null;
+  } catch(err){
+    $('editErr').textContent = 'Not saved: ' + err.message;
+    $('editErr').hidden = false;
+  } finally { btn.disabled = false; btn.textContent = 'Save changes'; }
 });
 
 $('excForm').addEventListener('submit', async e => {
@@ -949,6 +1236,8 @@ $('excForm').addEventListener('submit', async e => {
 
 $('openAdd').addEventListener('click', () => {
   $('addErr').hidden = true;
+  pendingShots = [];
+  renderPendingShots();
   $('aDate').value = new Date().toISOString().slice(0,10);
   openSheet('addSheet');
   setTimeout(()=>$('aDesc').focus(), 300);
@@ -971,14 +1260,26 @@ $('addForm').addEventListener('submit', async e => {
     'Pre-Agreed': $('aAgreed').value,
     'Loan Account': $('aLoan').value,
     'Recurring': $('aRec').value,
-    'Receipt URL': $('aReceipt').value.trim(),
     'Notes': $('aNotes').value.trim(),
     'Logged By': $('aBy').value
   };
   try {
     const j = await apiPost({ action:'create', row });
-    ROWS.push(j.row);
+    const saved = j.row;
+
+    for (let i = 0; i < pendingShots.length; i++){
+      btn.textContent = `Uploading photo ${i+1} of ${pendingShots.length}…`;
+      try {
+        const up = await uploadShot(pendingShots[i].dataUri, saved.ID, (row.Description||'receipt').slice(0,40));
+        receiptCache[up.fileId] = pendingShots[i].dataUri;
+        saved['Receipt File ID'] = [saved['Receipt File ID'], up.fileId].filter(Boolean).join(',');
+      } catch(e){ toast('Entry saved, but a photo did not upload'); }
+    }
+
+    ROWS.push(saved);
+    pendingShots = [];
     $('addForm').reset();
+    renderPendingShots();
     closeSheets(); render(); toast('Logged ' + money(row.Amount));
   } catch(err){
     $('addErr').textContent = 'Not saved: ' + err.message + '. Check your connection and try again.';
@@ -1040,6 +1341,7 @@ $('sync').addEventListener('pointerdown', () => {
 });
 ['pointerup','pointerleave','pointercancel'].forEach(ev => $('sync').addEventListener(ev, ()=>clearTimeout(press)));
 
+renderPendingShots();
 load();
 </script>
 </body>
