@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12231C">
+<title>164 Deodar — Expense Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#12231C;
+  --ink-soft:#3D4F47;
+  --mute:#7C8A83;
+  --line:#DDE3DF;
+  --bg:#F1F4F2;
+  --card:#FFFFFF;
+  --green:#1F6F4E;
+  --green-dim:#E3F0E9;
+  --clay:#9A5B2B;
+  --clay-dim:#F6EBE0;
+  --red:#A03434;
+  --r:14px;
+  --pad:16px;
+  --shadow:0 1px 2px rgba(18,35,28,.06), 0 8px 24px -16px rgba(18,35,28,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:400 15px/1.5 "IBM Plex Sans", system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(84px + env(safe-area-inset-bottom));
+}
+h1,h2,h3{font-family:"Bricolage Grotesque",serif;font-weight:700;margin:0;letter-spacing:-.01em}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:760px;margin:0 auto;padding:0 var(--pad)}
+
+/* ---- header ---- */
+header{
+  background:var(--ink); color:#EAF0EC;
+  padding:calc(18px + env(safe-area-inset-top)) 0 18px;
+}
+header .wrap{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+header h1{font-size:19px;color:#fff;line-height:1.2}
+header p{margin:3px 0 0;font-size:12.5px;color:#93A79C}
+#sync{
+  font-size:11.5px;color:#93A79C;border:1px solid #2C4238;border-radius:99px;
+  padding:5px 11px;white-space:nowrap;flex:none
+}
+#sync.busy{color:#EAD9A8;border-color:#4A4326}
+#sync.bad{color:#F0B4B4;border-color:#5A2C2C}
+
+/* ---- tabs ---- */
+nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:40;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);
+  padding:6px 0 calc(6px + env(safe-area-inset-bottom));
+  display:flex
+}
+nav button{
+  flex:1;padding:9px 4px;font-size:11.5px;font-weight:500;color:var(--mute);
+  display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:10px
+}
+nav button svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+nav button[aria-current="true"]{color:var(--green)}
+nav .fab{flex:none;padding:0 14px}
+nav .fab span{
+  width:50px;height:50px;border-radius:16px;background:var(--green);color:#fff;
+  display:grid;place-items:center;font-size:26px;line-height:1;box-shadow:0 6px 16px -6px rgba(31,111,78,.7)
+}
+
+section[hidden]{display:none}
+.pane{padding-top:18px}
+
+/* ---- cards ---- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.stat{padding:18px 18px 16px;margin-bottom:12px}
+.stat .lbl{font-size:12.5px;color:var(--mute);margin-bottom:6px}
+.stat .big{font-family:"IBM Plex Mono",monospace;font-size:31px;font-weight:500;letter-spacing:-.02em;line-height:1}
+.stat .sub{font-size:12.5px;color:var(--ink-soft);margin-top:9px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.duo .stat{margin:0}
+.duo .big{font-size:22px}
+
+.settle{padding:18px;margin-bottom:12px;border-left:3px solid var(--clay)}
+.settle .who{font-family:"Bricolage Grotesque",serif;font-size:17px;font-weight:700;margin-top:4px}
+.settle .amt{font-family:"IBM Plex Mono",monospace;font-size:27px;font-weight:500;color:var(--clay);margin-top:6px}
+.settle.level{border-left-color:var(--green)}
+.settle.level .amt{color:var(--green)}
+
+h2.sec{font-size:14px;margin:22px 0 10px;color:var(--ink-soft);font-family:"IBM Plex Sans",sans-serif;font-weight:600}
+
+/* ---- breakdown bars ---- */
+.bar{padding:14px 16px;border-bottom:1px solid var(--line)}
+.bar:last-child{border-bottom:none}
+.bar .top{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;margin-bottom:7px}
+.bar .top b{font-weight:500}
+.bar .track{height:5px;background:var(--bg);border-radius:99px;overflow:hidden}
+.bar .fill{height:100%;background:var(--green);border-radius:99px}
+.bar small{color:var(--mute);font-size:11.5px}
+
+/* ---- filters ---- */
+.filters{padding:14px 16px;margin-bottom:12px}
+.chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;padding:7px 13px;border-radius:99px;border:1px solid var(--line);
+  background:#fff;font-size:13px;color:var(--ink-soft);white-space:nowrap
+}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.frow.one{grid-template-columns:1fr}
+select,input[type=text],input[type=date],input[type=number],textarea{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;
+  background:#fff;font-size:15px;appearance:none
+}
+select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%237C8A83' stroke-width='1.6' fill='none' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+textarea{min-height:76px;resize:vertical}
+label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:5px;font-weight:500}
+.reset{font-size:13px;color:var(--green);font-weight:500;padding:8px 0;margin-top:6px}
+
+/* ---- expense rows ---- */
+.list{overflow:hidden}
+.row{display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);width:100%;text-align:left;align-items:flex-start}
+.row:last-child{border-bottom:none}
+.row .body{flex:1;min-width:0}
+.row .t1{font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .t2{font-size:12.5px;color:var(--mute);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .amt{font-family:"IBM Plex Mono",monospace;font-size:15px;text-align:right;flex:none;padding-top:1px}
+.row.out .t1,.row.out .amt{color:var(--mute);text-decoration:line-through;text-decoration-thickness:1px}
+.tag{display:inline-block;font-size:10.5px;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:1px;font-weight:500;letter-spacing:.01em}
+.tag.p{background:var(--clay-dim);color:var(--clay)}
+.tag.l{background:var(--green-dim);color:var(--green)}
+.empty{padding:44px 20px;text-align:center;color:var(--mute);font-size:14px}
+.empty b{display:block;color:var(--ink);font-size:15px;margin-bottom:5px;font-weight:500}
+.daygroup{font-size:12px;color:var(--mute);padding:14px 16px 6px;background:var(--bg)}
+
+/* ---- sheet / modal ---- */
+.scrim{position:fixed;inset:0;background:rgba(18,35,28,.42);z-index:50;opacity:0;pointer-events:none;transition:opacity .18s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--bg);
+  border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;
+  transform:translateY(101%);transition:transform .26s cubic-bezier(.32,.72,0,1);
+  padding-bottom:calc(28px + env(safe-area-inset-bottom))
+}
+.sheet.on{transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none}}
+.sheet .head{
+  position:sticky;top:0;background:var(--bg);padding:16px var(--pad) 12px;
+  display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);z-index:2
+}
+.sheet .head h2{font-size:17px}
+.sheet .head button{font-size:14.5px;color:var(--mute);padding:6px 2px}
+.sheet .grip{width:36px;height:4px;background:var(--line);border-radius:99px;margin:8px auto 0}
+.sheet form,.sheet .content{padding:16px var(--pad) 0;display:grid;gap:13px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.submit{
+  background:var(--green);color:#fff;padding:15px;border-radius:12px;font-size:15.5px;font-weight:600;
+  margin-top:6px;box-shadow:0 6px 16px -8px rgba(31,111,78,.8)
+}
+.submit:disabled{opacity:.5;box-shadow:none}
+.ghost{border:1px solid var(--line);background:#fff;padding:13px;border-radius:12px;font-size:15px;font-weight:500}
+.ghost.danger{color:var(--clay);border-color:#E4CDB6}
+.err{background:#FBEAEA;color:var(--red);padding:11px 13px;border-radius:10px;font-size:13.5px}
+
+/* detail */
+.dl{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.dl div{display:flex;justify-content:space-between;gap:16px;padding:12px 15px;border-bottom:1px solid var(--line);font-size:14px}
+.dl div:last-child{border-bottom:none}
+.dl dt{color:var(--mute);flex:none;font-size:13px}
+.dl dd{margin:0;text-align:right;word-break:break-word}
+.detail-amt{text-align:center;padding:6px 0 4px}
+.detail-amt .n{font-family:"IBM Plex Mono",monospace;font-size:33px;font-weight:500;letter-spacing:-.02em}
+.detail-amt .d{font-size:14px;color:var(--mute);margin-top:6px}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,14px);
+  background:var(--ink);color:#fff;padding:11px 17px;border-radius:99px;font-size:13.5px;z-index:80;
+  opacity:0;pointer-events:none;transition:.2s;max-width:88vw;text-align:center
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div>
+      <h1>164 Deodar Street</h1>
+      <p>Bothma &amp; Visser Properties — expense register</p>
+    </div>
+    <button id="sync" type="button">Loading</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="pane-dash" class="pane">
+    <div class="card stat">
+      <div class="lbl" id="dashPeriod">All time</div>
+      <div class="big" id="totalSpend">R0</div>
+      <div class="sub" id="totalSub">No entries yet</div>
+    </div>
+
+    <div class="duo">
+      <div class="card stat">
+        <div class="lbl" id="lblA">Bothma</div>
+        <div class="big" id="paidA">R0</div>
+        <div class="sub" id="shareA">share R0</div>
+      </div>
+      <div class="card stat">
+        <div class="lbl" id="lblB">Visser</div>
+        <div class="big" id="paidB">R0</div>
+        <div class="sub" id="shareB">share R0</div>
+      </div>
+    </div>
+
+    <div class="card settle" id="settle">
+      <div class="lbl">Reimbursement between you</div>
+      <div class="who" id="settleWho">Square</div>
+      <div class="amt" id="settleAmt">R0</div>
+      <div class="sub" id="settleNote">Out-of-pocket payments only. Business account spend is excluded.</div>
+    </div>
+
+    <h2 class="sec">Where the money went</h2>
+    <div class="card list" id="byCat"></div>
+
+    <h2 class="sec">Who paid</h2>
+    <div class="card list" id="byPayer"></div>
+
+    <h2 class="sec">Loan account</h2>
+    <div class="card list" id="byLoan"></div>
+
+    <h2 class="sec">Excluded as personal</h2>
+    <div class="card list" id="excludedBox"></div>
+  </section>
+
+  <!-- ============ EXPENSES ============ -->
+  <section id="pane-list" class="pane" hidden>
+    <div class="card filters">
+      <div class="chips" id="periodChips"></div>
+      <div class="frow" id="customRange" hidden>
+        <label><span class="f">From</span><input type="date" id="fFrom"></label>
+        <label><span class="f">To</span><input type="date" id="fTo"></label>
+      </div>
+      <div class="frow">
+        <label><span class="f">Category</span><select id="fCat"><option value="">All</option></select></label>
+        <label><span class="f">Paid by</span><select id="fPaid"><option value="">All</option></select></label>
+      </div>
+      <div class="frow">
+        <label><span class="f">Split</span><select id="fSplit"><option value="">All</option></select></label>
+        <label><span class="f">Status</span><select id="fStatus">
+          <option value="Included">Included only</option>
+          <option value="">Included + excluded</option>
+          <option value="Excluded">Excluded only</option>
+        </select></label>
+      </div>
+      <div class="frow one">
+        <label><span class="f">Search description, merchant or notes</span><input type="text" id="fText" placeholder="e.g. chlorine, Builders, geyser"></label>
+      </div>
+      <button class="reset" id="resetFilters" type="button">Clear filters</button>
+    </div>
+
+    <div class="card stat" style="padding:15px 18px">
+      <div class="lbl"><span id="countLbl">0 entries</span></div>
+      <div class="big" id="filteredTotal" style="font-size:25px">R0</div>
+    </div>
+
+    <div class="card list" id="rows"></div>
+  </section>
+</main>
+
+<nav>
+  <button id="tab-dash" aria-current="true" type="button">
+    <svg viewBox="0 0 24 24"><path d="M4 19V10M10 19V5M16 19v-6M22 19H2"/></svg>Dashboard</button>
+  <button class="fab" id="openAdd" type="button" aria-label="Log an expense"><span>+</span></button>
+  <button id="tab-list" type="button">
+    <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>Expenses</button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+
+<!-- ============ ADD SHEET ============ -->
+<div class="sheet" id="addSheet" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+  <div class="grip"></div>
+  <div class="head">
+    <h2 id="addTitle">Log an expense</h2>
+    <button type="button" data-close>Cancel</button>
+  </div>
+  <form id="addForm">
+    <div id="addErr" class="err" hidden></div>
+    <label><span class="f">What was it?</span><input type="text" id="aDesc" required placeholder="Pool chlorine and refuse bags"></label>
+    <div class="pair">
+      <label><span class="f">Amount (R)</span><input type="number" id="aAmt" step="0.01" min="0" required inputmode="decimal" placeholder="0.00"></label>
+      <label><span class="f">Date</span><input type="date" id="aDate" required></label>
+    </div>
+    <label><span class="f">Where</span><input type="text" id="aMerch" placeholder="Builders Warehouse"></label>
+    <label><span class="f">Category</span><select id="aCat" required></select></label>
+    <div class="pair">
+      <label><span class="f">Paid by</span><select id="aPaid" required></select></label>
+      <label><span class="f">How</span><select id="aMethod"></select></label>
+    </div>
+    <label><span class="f">Split</span><select id="aSplit" required></select></label>
+    <div class="pair">
+      <label><span class="f">Agreed in advance</span><select id="aAgreed"></select></label>
+      <label><span class="f">Loan account</span><select id="aLoan"></select></label>
+    </div>
+    <label><span class="f">Recurring</span><select id="aRec"></select></label>
+    <label><span class="f">Receipt link (optional)</span><input type="text" id="aReceipt" placeholder="Paste a photo link"></label>
+    <label><span class="f">Notes (optional)</span><textarea id="aNotes" placeholder="Anything worth remembering later"></textarea></label>
+    <label><span class="f">Logged by</span><select id="aBy" required></select></label>
+    <button class="submit" type="submit" id="addBtn">Save expense</button>
+    <div style="height:8px"></div>
+  </form>
+</div>
+
+<!-- ============ DETAIL SHEET ============ -->
+<div class="sheet" id="detSheet" role="dialog" aria-modal="true" aria-labelledby="detTitle">
+  <div class="grip"></div>
+  <div class="head">
+    <h2 id="detTitle">Expense</h2>
+    <button type="button" data-close>Close</button>
+  </div>
+  <div class="content" id="detBody"></div>
+</div>
+
+<!-- ============ EXCLUDE SHEET ============ -->
+<div class="sheet" id="excSheet" role="dialog" aria-modal="true" aria-labelledby="excTitle">
+  <div class="grip"></div>
+  <div class="head">
+    <h2 id="excTitle">Move to personal</h2>
+    <button type="button" data-close>Cancel</button>
+  </div>
+  <form id="excForm">
+    <p style="margin:0;font-size:14px;color:var(--ink-soft)">This stays in the register as a record, but drops out of every business total. Say why, so it makes sense when you read it back in a year.</p>
+    <label><span class="f">Reason</span><textarea id="excReason" required placeholder="Agreed 30 Aug — pet costs are the owner's account, cl. 14.3"></textarea></label>
+    <button class="submit" type="submit" id="excBtn" style="background:var(--clay);box-shadow:none">Exclude this expense</button>
+    <div style="height:8px"></div>
+  </form>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const DEFAULT_API = "https://script.google.com/macros/s/AKfycbwn9dkKtAIytnEQbRrkE4a5Ozymo5Bzt7nf7PwIWhP3Jbj2QHplwsAnwyw4cAIhUXWi/exec";
+
+function apiUrl(){
+  try { return localStorage.getItem('bv_api') || DEFAULT_API; } catch(e){ return DEFAULT_API; }
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let ROWS = [], LISTS = {}, SETTINGS = {};
+let NAME_A = 'Bothma', NAME_B = 'Visser';
+let excludeTarget = null;
+
+const filters = { period:'all', from:'', to:'', cat:'', paid:'', split:'', status:'Included', text:'' };
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const money = n => 'R' + (Math.round((Number(n)||0)*100)/100).toLocaleString('en-ZA',{minimumFractionDigits:2,maximumFractionDigits:2});
+const money0 = n => 'R' + Math.round(Number(n)||0).toLocaleString('en-ZA');
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('on'), 2600);
+}
+function setSync(text, cls){
+  const s = $('sync'); s.textContent = text; s.className = cls||'';
+}
+function isoDate(v){
+  if (!v) return '';
+  if (typeof v === 'string') return v.slice(0,10);
+  const d = new Date(v); return isNaN(d) ? '' : d.toISOString().slice(0,10);
+}
+function prettyDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});
+}
+function dayLabel(iso){
+  const today = new Date(); const t = today.toISOString().slice(0,10);
+  const y = new Date(today.getTime()-864e5).toISOString().slice(0,10);
+  if (iso === t) return 'Today';
+  if (iso === y) return 'Yesterday';
+  return prettyDate(iso);
+}
+
+/* ============================================================
+   API
+   ============================================================ */
+async function apiGet(){
+  const res = await fetch(apiUrl() + '?action=list&t=' + Date.now());
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'Unknown error');
+  return j;
+}
+async function apiPost(payload){
+  const res = await fetch(apiUrl(), {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'}, // avoids CORS preflight
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error || 'Write rejected');
+  return j;
+}
+
+async function load(){
+  setSync('Syncing…','busy');
+  try {
+    const j = await apiGet();
+    ROWS = (j.rows||[]).filter(r => r.ID);
+    LISTS = j.lists || {};
+    SETTINGS = j.settings || {};
+    NAME_A = SETTINGS['Shareholder 1 name'] || 'Bothma';
+    NAME_B = SETTINGS['Shareholder 2 name'] || 'Visser';
+    buildOptions();
+    render();
+    setSync('Synced');
+  } catch (e) {
+    setSync('Offline','bad');
+    toast('Could not reach the sheet: ' + e.message);
+  }
+}
+
+/* ============================================================
+   OPTION BUILDING
+   ============================================================ */
+function fill(sel, arr, opts){
+  opts = opts || {};
+  const el = $(sel); if(!el) return;
+  const keep = el.value;
+  el.innerHTML = '';
+  if (opts.allLabel) el.appendChild(new Option(opts.allLabel, ''));
+  (arr||[]).forEach(v => el.appendChild(new Option(v, v)));
+  if (keep && [...el.options].some(o=>o.value===keep)) el.value = keep;
+  else if (opts.def) el.value = opts.def;
+}
+function buildOptions(){
+  fill('fCat',    LISTS['Category'],       {allLabel:'All categories'});
+  fill('fPaid',   LISTS['Paid By'],        {allLabel:'Everyone'});
+  fill('fSplit',  LISTS['Split'],          {allLabel:'All splits'});
+  fill('aCat',    LISTS['Category']);
+  fill('aPaid',   LISTS['Paid By']);
+  fill('aMethod', LISTS['Payment Method']);
+  fill('aSplit',  LISTS['Split'],          {def:'50/50'});
+  fill('aAgreed', LISTS['Pre-Agreed'],     {def:'Yes'});
+  fill('aLoan',   LISTS['Loan Account'],   {def:'No'});
+  fill('aRec',    LISTS['Recurring'],      {def:'No'});
+  fill('aBy',     LISTS['Logged By']);
+  $('lblA').textContent = NAME_A + ' paid';
+  $('lblB').textContent = NAME_B + ' paid';
+}
+
+/* ============================================================
+   FILTERING
+   ============================================================ */
+function periodBounds(){
+  const now = new Date();
+  const p = filters.period;
+  const fmt = d => d.toISOString().slice(0,10);
+  if (p === 'month')  return [fmt(new Date(now.getFullYear(), now.getMonth(), 1)), fmt(now)];
+  if (p === 'last')   return [fmt(new Date(now.getFullYear(), now.getMonth()-1, 1)), fmt(new Date(now.getFullYear(), now.getMonth(), 0))];
+  if (p === '3m')     return [fmt(new Date(now.getFullYear(), now.getMonth()-2, 1)), fmt(now)];
+  if (p === 'year')   return [fmt(new Date(now.getFullYear(), 0, 1)), fmt(now)];
+  if (p === 'custom') return [filters.from, filters.to];
+  return ['',''];
+}
+function periodLabel(){
+  const p = filters.period;
+  const [a,b] = periodBounds();
+  if (p==='all') return 'All time';
+  if (p==='month') return 'This month';
+  if (p==='last') return 'Last month';
+  if (p==='3m') return 'Last 3 months';
+  if (p==='year') return 'This year';
+  if (a && b) return prettyDate(a) + ' — ' + prettyDate(b);
+  if (a) return 'From ' + prettyDate(a);
+  if (b) return 'Up to ' + prettyDate(b);
+  return 'Custom range';
+}
+function applyFilters(){
+  const [from,to] = periodBounds();
+  const q = filters.text.trim().toLowerCase();
+  return ROWS.filter(r => {
+    const d = isoDate(r['Date']);
+    if (from && d && d < from) return false;
+    if (to && d && d > to) return false;
+    if (filters.cat && r['Category'] !== filters.cat) return false;
+    if (filters.paid && r['Paid By'] !== filters.paid) return false;
+    if (filters.split && r['Split'] !== filters.split) return false;
+    if (filters.status && (r['Status']||'Included') !== filters.status) return false;
+    if (q) {
+      const hay = [r['Description'],r['Merchant'],r['Notes'],r['Category'],r['Exclusion Reason']].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  }).sort((a,b) => (isoDate(b['Date'])||'').localeCompare(isoDate(a['Date'])||'') || String(b.ID).localeCompare(String(a.ID)));
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){ renderDash(); renderList(); }
+
+function inRange(r){
+  const [from,to] = periodBounds();
+  const d = isoDate(r['Date']);
+  if (from && d && d < from) return false;
+  if (to && d && d > to) return false;
+  return true;
+}
+
+function renderDash(){
+  const scope = ROWS.filter(inRange);
+  const inc = scope.filter(r => (r['Status']||'Included') === 'Included');
+  const exc = scope.filter(r => r['Status'] === 'Excluded');
+
+  const total = inc.reduce((s,r) => s + (Number(r['Amount'])||0), 0);
+  $('dashPeriod').textContent = periodLabel() + ' · business expenses';
+  $('totalSpend').textContent = money0(total);
+  $('totalSub').textContent = inc.length
+    ? inc.length + (inc.length===1?' entry':' entries') + (exc.length ? ' · ' + exc.length + ' excluded as personal' : '')
+    : 'Nothing logged in this period yet';
+
+  const paidA = inc.filter(r=>r['Paid By']===NAME_A).reduce((s,r)=>s+(Number(r['Amount'])||0),0);
+  const paidB = inc.filter(r=>r['Paid By']===NAME_B).reduce((s,r)=>s+(Number(r['Amount'])||0),0);
+  const shA = inc.reduce((s,r)=>s+(Number(r['Bothma Share'])||0),0);
+  const shB = inc.reduce((s,r)=>s+(Number(r['Visser Share'])||0),0);
+  $('paidA').textContent = money0(paidA);
+  $('paidB').textContent = money0(paidB);
+  $('shareA').textContent = 'owes ' + money0(shA) + ' of the total';
+  $('shareB').textContent = 'owes ' + money0(shB) + ' of the total';
+
+  // settlement: out-of-pocket only (rows not paid from the Business Account)
+  const oop = inc.filter(r => r['Paid By']===NAME_A || r['Paid By']===NAME_B);
+  let bal = 0; // positive => B owes A
+  oop.forEach(r => {
+    const amt = Number(r['Amount'])||0;
+    const sA = Number(r['Bothma Share'])||0;
+    const sB = Number(r['Visser Share'])||0;
+    if (r['Paid By']===NAME_A) bal += (amt - sA);
+    else bal -= (amt - sB);
+  });
+  const st = $('settle');
+  if (Math.abs(bal) < 0.01){
+    st.className = 'card settle level';
+    $('settleWho').textContent = 'You are square';
+    $('settleAmt').textContent = money(0);
+  } else {
+    st.className = 'card settle';
+    $('settleWho').textContent = (bal>0 ? NAME_B + ' owes ' + NAME_A : NAME_A + ' owes ' + NAME_B);
+    $('settleAmt').textContent = money(Math.abs(bal));
+  }
+  $('settleNote').textContent = oop.length
+    ? 'Based on ' + oop.length + ' out-of-pocket ' + (oop.length===1?'payment':'payments') + '. Business account spend is left out.'
+    : 'Nothing paid out of pocket in this period.';
+
+  // by category
+  const cat = {};
+  inc.forEach(r => { const k = r['Category']||'Uncategorised'; cat[k] = (cat[k]||0) + (Number(r['Amount'])||0); });
+  const cats = Object.entries(cat).sort((a,b)=>b[1]-a[1]);
+  const max = cats.length ? cats[0][1] : 1;
+  $('byCat').innerHTML = cats.length ? cats.map(([k,v]) => `
+    <div class="bar">
+      <div class="top"><span>${esc(k)}</span><b class="num">${money0(v)}</b></div>
+      <div class="track"><div class="fill" style="width:${Math.max(2,(v/max)*100)}%"></div></div>
+      <small>${total ? ((v/total)*100).toFixed(1) : 0}% of spend</small>
+    </div>`).join('') : `<div class="empty"><b>No spend yet</b>Log something and the breakdown fills in.</div>`;
+
+  // by payer
+  const pay = {};
+  inc.forEach(r => { const k = r['Paid By']||'Unspecified'; pay[k] = (pay[k]||0) + (Number(r['Amount'])||0); });
+  const pays = Object.entries(pay).sort((a,b)=>b[1]-a[1]);
+  const pmax = pays.length ? pays[0][1] : 1;
+  $('byPayer').innerHTML = pays.length ? pays.map(([k,v]) => `
+    <div class="bar">
+      <div class="top"><span>${esc(k)}</span><b class="num">${money0(v)}</b></div>
+      <div class="track"><div class="fill" style="width:${Math.max(2,(v/pmax)*100)}%"></div></div>
+    </div>`).join('') : `<div class="empty">Nothing recorded.</div>`;
+
+  // loan account (all time, not period-bound — it is a running balance)
+  const loanRows = ROWS.filter(r => (r['Status']||'Included')==='Included' && String(r['Loan Account']||'').startsWith('Credit'));
+  const loan = {};
+  loanRows.forEach(r => {
+    const who = String(r['Loan Account']).replace('Credit - ','').trim();
+    const amt = Number(r['Amount'])||0;
+    const own = who===NAME_A ? (Number(r['Bothma Share'])||0) : (Number(r['Visser Share'])||0);
+    loan[who] = (loan[who]||0) + Math.max(0, amt - own);
+  });
+  const loans = Object.entries(loan);
+  $('byLoan').innerHTML = loans.length ? loans.map(([k,v]) => `
+    <div class="bar">
+      <div class="top"><span>${esc(k)} — claim against the company</span><b class="num">${money(v)}</b></div>
+      <small>Running total, all time. Settled on exit under clauses 18 and 19.</small>
+    </div>`).join('') : `<div class="empty"><b>No loan account entries</b>Flag an expense as a loan account credit when one of you pays above his half.</div>`;
+
+  // excluded
+  const excTotal = exc.reduce((s,r)=>s+(Number(r['Amount'])||0),0);
+  $('excludedBox').innerHTML = exc.length ? `
+    <div class="bar">
+      <div class="top"><span>${exc.length} ${exc.length===1?'expense':'expenses'} kept off the books</span><b class="num">${money0(excTotal)}</b></div>
+      <small>Still recorded, never counted. Filter the expenses tab by Excluded to review them.</small>
+    </div>` : `<div class="empty">Nothing excluded in this period.</div>`;
+}
+
+function renderList(){
+  const rows = applyFilters();
+  const total = rows.filter(r=>(r['Status']||'Included')==='Included').reduce((s,r)=>s+(Number(r['Amount'])||0),0);
+  $('countLbl').textContent = rows.length + (rows.length===1?' entry':' entries') + ' · ' + periodLabel().toLowerCase();
+  $('filteredTotal').textContent = money0(total);
+
+  if (!rows.length){
+    $('rows').innerHTML = `<div class="empty"><b>Nothing matches</b>Widen the date range or clear the filters.</div>`;
+    return;
+  }
+  let html = '', lastDay = null;
+  rows.forEach(r => {
+    const d = isoDate(r['Date']);
+    if (d !== lastDay){ html += `<div class="daygroup">${esc(dayLabel(d))}</div>`; lastDay = d; }
+    const out = (r['Status']==='Excluded');
+    const meta = [r['Category'], r['Merchant'], 'paid by ' + (r['Paid By']||'—')].filter(Boolean).join(' · ');
+    const tags = (out ? '<span class="tag p">personal</span>' : '')
+               + (String(r['Loan Account']||'').startsWith('Credit') ? '<span class="tag l">loan</span>' : '');
+    html += `<button class="row${out?' out':''}" data-id="${esc(r.ID)}" type="button">
+      <div class="body">
+        <div class="t1">${esc(r['Description']||'(no description)')}${tags}</div>
+        <div class="t2">${esc(meta)}</div>
+      </div>
+      <div class="amt">${money(r['Amount'])}</div>
+    </button>`;
+  });
+  $('rows').innerHTML = html;
+}
+
+/* ============================================================
+   SHEETS
+   ============================================================ */
+function openSheet(id){
+  $('scrim').classList.add('on');
+  $(id).classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheets(){
+  $('scrim').classList.remove('on');
+  ['addSheet','detSheet','excSheet'].forEach(i => $(i).classList.remove('on'));
+  document.body.style.overflow = '';
+}
+$('scrim').addEventListener('click', closeSheets);
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
+
+/* ---- detail ---- */
+function openDetail(id){
+  const r = ROWS.find(x => String(x.ID) === String(id));
+  if (!r) return;
+  const out = r['Status'] === 'Excluded';
+  const field = (k, v) => v ? `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>` : '';
+  $('detTitle').textContent = out ? 'Personal expense' : 'Business expense';
+  $('detBody').innerHTML = `
+    <div class="detail-amt">
+      <div class="n">${money(r['Amount'])}</div>
+      <div class="d">${esc(r['Description']||'')}</div>
+    </div>
+    <dl class="dl">
+      ${field('Date', prettyDate(isoDate(r['Date'])))}
+      ${field('Category', r['Category'])}
+      ${field('Where', r['Merchant'])}
+      ${field('Paid by', r['Paid By'])}
+      ${field('Method', r['Payment Method'])}
+      ${field('Split', r['Split'])}
+      <div><dt>${esc(NAME_A)}'s share</dt><dd class="num">${money(r['Bothma Share'])}</dd></div>
+      <div><dt>${esc(NAME_B)}'s share</dt><dd class="num">${money(r['Visser Share'])}</dd></div>
+      ${field('Agreed in advance', r['Pre-Agreed'])}
+      ${field('Loan account', r['Loan Account'])}
+      ${field('Recurring', r['Recurring'])}
+      ${field('Notes', r['Notes'])}
+      ${field('Logged by', r['Logged By'])}
+      ${field('Reason excluded', r['Exclusion Reason'])}
+      <div><dt>Reference</dt><dd class="num" style="font-size:12px">${esc(r.ID)}</dd></div>
+    </dl>
+    ${r['Receipt URL'] ? `<a class="ghost" style="display:block;text-align:center;text-decoration:none" href="${esc(r['Receipt URL'])}" target="_blank" rel="noopener">Open the receipt</a>` : ''}
+    ${out
+      ? `<button class="ghost" id="detInclude" type="button">Put back on the business</button>`
+      : `<button class="ghost danger" id="detExclude" type="button">Move to personal</button>`}
+    <div style="height:8px"></div>`;
+
+  const ex = $('detExclude'), inc = $('detInclude');
+  if (ex) ex.addEventListener('click', () => { excludeTarget = r.ID; closeSheets(); setTimeout(()=>{ $('excReason').value=''; openSheet('excSheet'); }, 220); });
+  if (inc) inc.addEventListener('click', async () => {
+    inc.disabled = true; inc.textContent = 'Saving…';
+    try {
+      await apiPost({ action:'setStatus', id:r.ID, status:'Included', reason:'' });
+      r['Status']='Included'; r['Exclusion Reason']='';
+      closeSheets(); render(); toast('Back on the business books');
+    } catch(e){ inc.disabled=false; inc.textContent='Put back on the business'; toast(e.message); }
+  });
+  openSheet('detSheet');
+}
+$('rows').addEventListener('click', e => {
+  const btn = e.target.closest('.row'); if (btn) openDetail(btn.dataset.id);
+});
+
+/* ---- exclude ---- */
+$('excForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const reason = $('excReason').value.trim();
+  if (!reason || !excludeTarget) return;
+  const btn = $('excBtn'); btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    await apiPost({ action:'setStatus', id:excludeTarget, status:'Excluded', reason });
+    const r = ROWS.find(x => String(x.ID)===String(excludeTarget));
+    if (r){ r['Status']='Excluded'; r['Exclusion Reason']=reason; }
+    closeSheets(); render(); toast('Moved to personal');
+  } catch(err){ toast(err.message); }
+  finally { btn.disabled = false; btn.textContent = 'Exclude this expense'; excludeTarget = null; }
+});
+
+/* ---- add ---- */
+$('openAdd').addEventListener('click', () => {
+  $('addErr').hidden = true;
+  $('aDate').value = new Date().toISOString().slice(0,10);
+  openSheet('addSheet');
+  setTimeout(()=>$('aDesc').focus(), 300);
+});
+$('aSplit').addEventListener('change', () => {
+  const v = $('aSplit').value;
+  if (v.startsWith('Personal')) toast('Personal splits are usually excluded too — you can do that from the entry.');
+});
+$('addForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = $('addBtn'); btn.disabled = true; btn.textContent = 'Saving…';
+  $('addErr').hidden = true;
+  const row = {
+    'Date': $('aDate').value,
+    'Description': $('aDesc').value.trim(),
+    'Merchant': $('aMerch').value.trim(),
+    'Category': $('aCat').value,
+    'Amount': Number($('aAmt').value),
+    'Paid By': $('aPaid').value,
+    'Payment Method': $('aMethod').value,
+    'Split': $('aSplit').value,
+    'Status': 'Included',
+    'Exclusion Reason': '',
+    'Pre-Agreed': $('aAgreed').value,
+    'Loan Account': $('aLoan').value,
+    'Recurring': $('aRec').value,
+    'Receipt URL': $('aReceipt').value.trim(),
+    'Notes': $('aNotes').value.trim(),
+    'Logged By': $('aBy').value
+  };
+  try {
+    const j = await apiPost({ action:'create', row });
+    ROWS.push(j.row);
+    $('addForm').reset();
+    closeSheets(); render(); toast('Logged ' + money(row.Amount));
+  } catch(err){
+    $('addErr').textContent = 'Not saved: ' + err.message + '. Check your connection and try again.';
+    $('addErr').hidden = false;
+  } finally { btn.disabled = false; btn.textContent = 'Save expense'; }
+});
+
+/* ---- filters ---- */
+const PERIODS = [['all','All time'],['month','This month'],['last','Last month'],['3m','Last 3 months'],['year','This year'],['custom','Pick dates']];
+$('periodChips').innerHTML = PERIODS.map(([k,l]) =>
+  `<button class="chip" type="button" data-p="${k}" aria-pressed="${k===filters.period}">${l}</button>`).join('');
+$('periodChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  filters.period = b.dataset.p;
+  [...$('periodChips').children].forEach(c => c.setAttribute('aria-pressed', c===b));
+  $('customRange').hidden = filters.period !== 'custom';
+  render();
+});
+['fFrom','fTo'].forEach(id => $(id).addEventListener('change', () => {
+  filters.from = $('fFrom').value; filters.to = $('fTo').value; render();
+}));
+$('fCat').addEventListener('change', e => { filters.cat = e.target.value; render(); });
+$('fPaid').addEventListener('change', e => { filters.paid = e.target.value; render(); });
+$('fSplit').addEventListener('change', e => { filters.split = e.target.value; render(); });
+$('fStatus').addEventListener('change', e => { filters.status = e.target.value; render(); });
+let tt; $('fText').addEventListener('input', e => { clearTimeout(tt); tt = setTimeout(()=>{ filters.text = e.target.value; renderList(); }, 200); });
+$('resetFilters').addEventListener('click', () => {
+  Object.assign(filters, {period:'all',from:'',to:'',cat:'',paid:'',split:'',status:'Included',text:''});
+  $('fCat').value=''; $('fPaid').value=''; $('fSplit').value=''; $('fStatus').value='Included';
+  $('fText').value=''; $('fFrom').value=''; $('fTo').value=''; $('customRange').hidden = true;
+  [...$('periodChips').children].forEach(c => c.setAttribute('aria-pressed', c.dataset.p==='all'));
+  render();
+});
+
+/* ---- tabs ---- */
+function showTab(which){
+  $('pane-dash').hidden = which !== 'dash';
+  $('pane-list').hidden = which !== 'list';
+  $('tab-dash').setAttribute('aria-current', which==='dash');
+  $('tab-list').setAttribute('aria-current', which==='list');
+  window.scrollTo(0,0);
+}
+$('tab-dash').addEventListener('click', ()=>showTab('dash'));
+$('tab-list').addEventListener('click', ()=>showTab('list'));
+
+/* ---- sync button: tap to refresh, long-press to change the API url ---- */
+$('sync').addEventListener('click', load);
+let press;
+$('sync').addEventListener('pointerdown', () => {
+  press = setTimeout(() => {
+    const cur = apiUrl();
+    const next = prompt('Apps Script /exec URL', cur);
+    if (next && next !== cur){ try{ localStorage.setItem('bv_api', next.trim()); }catch(e){} load(); }
+  }, 900);
+});
+['pointerup','pointerleave','pointercancel'].forEach(ev => $('sync').addEventListener(ev, ()=>clearTimeout(press)));
+
+load();
+</script>
+</body>
+</html>
