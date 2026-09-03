@@ -176,6 +176,28 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
 .viewer .bin{position:absolute;bottom:calc(24px + env(safe-area-inset-bottom));color:#F0B4B4;font-size:14.5px;padding:10px 18px;border:1px solid rgba(240,180,180,.32);border-radius:99px}
 .editnote{font-size:12.5px;color:var(--mute);background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 13px}
 .editnote b{color:var(--ink-soft);font-weight:600}
+/* ---- photo source picker ---- */
+.picker{position:fixed;left:0;right:0;bottom:0;z-index:70;padding:0 12px calc(12px + env(safe-area-inset-bottom));transform:translateY(120%);transition:transform .24s cubic-bezier(.32,.72,0,1)}
+.picker.on{transform:translateY(0)}
+.picker .grp{background:rgba(255,255,255,.97);backdrop-filter:blur(14px);border-radius:15px;overflow:hidden;margin-bottom:9px}
+.picker button{display:flex;width:100%;align-items:center;gap:13px;padding:16px 18px;font-size:16px;border-bottom:1px solid var(--line);text-align:left}
+.picker .grp button:last-child{border-bottom:none}
+.picker svg{width:21px;height:21px;stroke:var(--green);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.picker .cancel{background:#fff;border-radius:15px;justify-content:center;font-weight:600;color:var(--ink);border:none}
+
+/* ---- submitted confirmation ---- */
+.done{position:fixed;inset:0;z-index:95;display:none;place-items:center;padding:24px;background:rgba(18,35,28,.5)}
+.done.on{display:grid}
+.done .box{background:#fff;border-radius:20px;padding:30px 24px 22px;max-width:340px;width:100%;text-align:center;box-shadow:0 24px 60px -20px rgba(18,35,28,.5);animation:pop .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.done .box{animation:none}}
+.done .tick{width:58px;height:58px;border-radius:50%;background:var(--green-dim);display:grid;place-items:center;margin:0 auto 16px}
+.done .tick svg{width:29px;height:29px;stroke:var(--green);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.done h2{font-size:19px;margin-bottom:7px}
+.done .amt{font-family:"IBM Plex Mono",monospace;font-size:29px;font-weight:500;letter-spacing:-.02em;margin:12px 0 4px}
+.done .what{font-size:14px;color:var(--ink-soft);word-break:break-word}
+.done .meta{font-size:12.5px;color:var(--mute);margin-top:10px;padding-top:12px;border-top:1px solid var(--line);line-height:1.45}
+.done .ok{background:var(--green);color:#fff;width:100%;padding:14px;border-radius:12px;font-size:15.5px;font-weight:600;margin-top:18px}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,14px);background:var(--ink);color:#fff;padding:11px 17px;border-radius:99px;font-size:13.5px;z-index:80;opacity:0;pointer-events:none;transition:.2s;max-width:88vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -352,7 +374,8 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
     <label><span class="f">Receipt photos</span>
       <div class="shots" id="aShots"></div>
     </label>
-    <input type="file" id="aFile" accept="image/*" capture="environment" multiple hidden>
+    <input type="file" id="aFileCam" accept="image/*" capture="environment" hidden>
+    <input type="file" id="aFileLib" accept="image/*" multiple hidden>
     <label><span class="f">Notes (optional)</span><textarea id="aNotes" placeholder="Anything worth remembering later"></textarea></label>
     <label><span class="f">Logged by</span><select id="aBy" required></select></label>
     <button class="submit" type="submit" id="addBtn">Save expense</button>
@@ -426,6 +449,29 @@ label span.f{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:
   <button class="bin" type="button" id="viewerDelete">Delete this receipt</button>
 </div>
 
+<div class="picker" id="picker" role="dialog" aria-modal="true" aria-label="Add a photo">
+  <div class="grp">
+    <button type="button" id="pickCam">
+      <svg viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 015.5 6h1.8l1.2-2h6l1.2 2h1.8A2.5 2.5 0 0120 8.5v8A2.5 2.5 0 0117.5 19h-11A2.5 2.5 0 014 16.5z"/><circle cx="12" cy="12.5" r="3.2"/></svg>
+      Take a photo</button>
+    <button type="button" id="pickLib">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="10" r="1.6"/><path d="M21 15.5l-4.5-4.5L7 20.5"/></svg>
+      Choose from gallery</button>
+  </div>
+  <button type="button" class="cancel" id="pickCancel">Cancel</button>
+</div>
+
+<div class="done" id="done" role="dialog" aria-modal="true" aria-labelledby="doneTitle">
+  <div class="box">
+    <div class="tick"><svg viewBox="0 0 24 24"><path d="M4 12.5l5.5 5.5L20 7"/></svg></div>
+    <h2 id="doneTitle">Expense claim submitted</h2>
+    <div class="amt" id="doneAmt">R0</div>
+    <div class="what" id="doneWhat"></div>
+    <div class="meta" id="doneMeta"></div>
+    <button class="ok" type="button" id="doneOk">Done</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -463,6 +509,20 @@ function toast(msg){
   clearTimeout(t._t); t._t = setTimeout(()=>t.classList.remove('on'), 2600);
 }
 function setSync(text, cls){ const s = $('sync'); s.textContent = text; s.className = cls||''; }
+
+/* A bietjie geselsigheid elke keer as ons sinkroniseer. */
+const LEKKER = ['Lekker!','Sharp sharp','Nou gaan ons','Blitsig','Piekfyn','Kwaai','Nogal windgat',
+  'Alles reg','Boeta, dis reg','Sommer net so','Netjies','Puik','Aitsa','Dis \u2019n plan',
+  'Foefie','Yoh, vinnig','Skoon soos \u2019n fluit','Op en wakker','Klaar gedink','Genoeg gepraat',
+  'Sien jou later','Hoe lyk dit','Vasbyt','Dis piekfyn','Nou praat jy','Sommer blink'];
+let lastQuip = -1;
+function quip(){
+  if (LEKKER.length < 2) return LEKKER[0];
+  let i;
+  do { i = Math.floor(Math.random()*LEKKER.length); } while (i === lastQuip);
+  lastQuip = i;
+  return LEKKER[i];
+}
 function isoDate(v){
   if (!v) return '';
   if (typeof v === 'string') return v.slice(0,10);
@@ -521,7 +581,8 @@ async function load(){
     NAME_B = SETTINGS['Shareholder 2 name'] || 'Visser';
     buildOptions();
     render();
-    setSync('Synced');
+    setSync(quip());
+    setTimeout(() => { if ($('sync').className === '') setSync('Synced'); }, 2400);
   } catch (e) {
     setSync('Offline','bad');
     toast('Could not reach the sheet: ' + e.message);
@@ -998,14 +1059,27 @@ function renderPendingShots(){
       <svg viewBox="0 0 24 24"><path d="M3 8.5A2.5 2.5 0 015.5 6h1.8l1.2-2h6l1.2 2h1.8A2.5 2.5 0 0120 8.5v8A2.5 2.5 0 0117.5 19h-11A2.5 2.5 0 014 16.5z"/><circle cx="12" cy="12.5" r="3.2"/></svg>
       Add photo</button>`;
 }
+/* Camera or gallery, asked each time rather than assumed. */
+let pickerTargets = null;   // {cam, lib} input element ids
+function askSource(camId, libId){
+  pickerTargets = { cam: camId, lib: libId };
+  $('picker').classList.add('on');
+}
+function closePicker(){ $('picker').classList.remove('on'); }
+$('pickCancel').addEventListener('click', closePicker);
+$('pickCam').addEventListener('click', () => { if (pickerTargets) $(pickerTargets.cam).click(); closePicker(); });
+$('pickLib').addEventListener('click', () => { if (pickerTargets) $(pickerTargets.lib).click(); closePicker(); });
+document.addEventListener('click', e => {
+  if ($('picker').classList.contains('on') && !e.target.closest('#picker') && !e.target.closest('#aShotAdd') && !e.target.closest('#detAddShot')) closePicker();
+});
+
 $('aShots').addEventListener('click', e => {
   const rm = e.target.closest('[data-rm]');
   if (rm){ pendingShots.splice(Number(rm.dataset.rm),1); renderPendingShots(); return; }
-  if (e.target.closest('#aShotAdd')) $('aFile').click();
+  if (e.target.closest('#aShotAdd')) askSource('aFileCam','aFileLib');
 });
-$('aFile').addEventListener('change', async e => {
-  const files = [...e.target.files];
-  e.target.value = '';
+
+async function queueFiles(files){
   for (const f of files){
     try {
       const dataUri = await compress(f);
@@ -1013,7 +1087,11 @@ $('aFile').addEventListener('change', async e => {
       renderPendingShots();
     } catch(err){ toast(err.message); }
   }
-});
+}
+['aFileCam','aFileLib'].forEach(id => $(id).addEventListener('change', async e => {
+  const files = [...e.target.files]; e.target.value = '';
+  await queueFiles(files);
+}));
 
 /* ---- viewer ---- */
 function openViewer(id, fileId, dataUri){
@@ -1050,7 +1128,12 @@ function closeSheets(){
 }
 $('scrim').addEventListener('click', closeSheets);
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeSheets));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('done').classList.contains('on')) { closeDone(); return; }
+  if ($('picker').classList.contains('on')) { closePicker(); return; }
+  closeSheets();
+});
 
 function openDetail(id){
   const r = ROWS.find(x => String(x.ID) === String(id));
@@ -1081,7 +1164,8 @@ function openDetail(id){
       <div><dt>Reference</dt><dd class="num" style="font-size:12px">${esc(r.ID)}</dd></div>
     </dl>
     <div id="detShots"></div>
-    <input type="file" id="dFile" accept="image/*" capture="environment" multiple hidden>
+    <input type="file" id="dFileCam" accept="image/*" capture="environment" hidden>
+    <input type="file" id="dFileLib" accept="image/*" multiple hidden>
     <button class="ghost" id="detAddShot" type="button">Add a receipt photo</button>
     ${r['Receipt URL'] ? `<a class="ghost" style="display:block;text-align:center;text-decoration:none" href="${esc(r['Receipt URL'])}" target="_blank" rel="noopener">Open the linked receipt</a>` : ''}
     <button class="ghost" id="detEdit" type="button">Edit this entry</button>
@@ -1091,8 +1175,8 @@ function openDetail(id){
     <div style="height:8px"></div>`;
 
   loadDetailShots(r);
-  $('detAddShot').addEventListener('click', () => $('dFile').click());
-  $('dFile').addEventListener('change', async e => {
+  $('detAddShot').addEventListener('click', () => askSource('dFileCam','dFileLib'));
+  const onDetailFiles = async e => {
     const files = [...e.target.files]; e.target.value = '';
     const btn = $('detAddShot');
     for (let i = 0; i < files.length; i++){
@@ -1106,7 +1190,9 @@ function openDetail(id){
       } catch(err){ toast(err.message); }
     }
     btn.disabled = false; btn.textContent = 'Add a receipt photo';
-  });
+  };
+  $('dFileCam').addEventListener('change', onDetailFiles);
+  $('dFileLib').addEventListener('change', onDetailFiles);
   $('detEdit').addEventListener('click', () => { closeSheets(); setTimeout(()=>openEdit(r.ID), 220); });
 
   const ex = $('detExclude'), inc = $('detInclude');
@@ -1277,15 +1363,45 @@ $('addForm').addEventListener('submit', async e => {
     }
 
     ROWS.push(saved);
+    const shots = pendingShots.length;
     pendingShots = [];
     $('addForm').reset();
     renderPendingShots();
-    closeSheets(); render(); toast('Logged ' + money(row.Amount));
+    closeSheets(); render();
+    showDone(saved, shots);
   } catch(err){
     $('addErr').textContent = 'Not saved: ' + err.message + '. Check your connection and try again.';
     $('addErr').hidden = false;
   } finally { btn.disabled = false; btn.textContent = 'Save expense'; }
 });
+
+/* ---- submission confirmation ---- */
+function showDone(saved, shotCount){
+  const amt = Number(saved['Amount'])||0;
+  const a = Number(saved['Bothma Share'])||0;
+  const b = Number(saved['Visser Share'])||0;
+
+  $('doneAmt').textContent = money(amt);
+  $('doneWhat').textContent = saved['Description'] || '';
+
+  const bits = [];
+  bits.push(`Split <b>${esc(saved['Split']||'50/50')}</b> \u2014 ${esc(NAME_A)} ${money(a)}, ${esc(NAME_B)} ${money(b)}`);
+  if (saved['Paid By']) bits.push(`Paid by ${esc(saved['Paid By'])}`);
+  if (shotCount) bits.push(`${shotCount} receipt photo${shotCount===1?'':'s'} attached`);
+  if (String(saved['Loan Account']||'').startsWith('Credit')) bits.push(`Recorded as a loan account credit`);
+  bits.push(`Reference ${esc(saved.ID)}`);
+  $('doneMeta').innerHTML = bits.join('<br>');
+
+  $('done').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => $('doneOk').focus(), 60);
+}
+function closeDone(){
+  $('done').classList.remove('on');
+  document.body.style.overflow = '';
+}
+$('doneOk').addEventListener('click', closeDone);
+$('done').addEventListener('click', e => { if (e.target.id === 'done') closeDone(); });
 
 /* ---- filters ---- */
 const PERIODS = [['all','All time'],['month','This month'],['last','Last month'],['3m','Last 3 months'],['year','This year'],['custom','Pick dates']];
